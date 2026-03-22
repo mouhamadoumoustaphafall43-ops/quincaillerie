@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f0e0b">
+<title>QuincaManager — Patron</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0e0b;--surface:#181714;--surface2:#222019;--border:#2e2b24;
+  --accent:#e8a020;--green:#4caf7d;--blue:#4090e8;--red:#e85020;
+  --text:#f0ece0;--text2:#a09880;--text3:#605848;
+  --nav-h:64px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;max-width:480px;margin:0 auto;}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;}
+.login-screen.hidden{display:none;}
+.login-logo{font-size:60px;text-align:center;margin-bottom:12px;}
+.login-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);text-align:center;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;text-align:center;margin-bottom:36px;}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:380px;}
+.f-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:1px;margin-bottom:6px;display:block;}
+.f-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--text);font-size:16px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:14px;-webkit-appearance:none;}
+.f-input:focus{border-color:var(--accent);}
+.login-btn{width:100%;padding:15px;border-radius:12px;border:none;background:var(--accent);color:#000;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.login-err{color:var(--red);font-size:12px;text-align:center;margin-top:10px;font-family:'DM Mono',monospace;min-height:16px;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;padding-top:calc(12px + env(safe-area-inset-top,0px));}
+.topbar-logo{display:flex;align-items:center;gap:8px;}
+.topbar-logo .icon{font-size:22px;}
+.topbar-logo h1{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent);}
+.badge-patron{background:rgba(232,160,32,.2);color:var(--accent);font-size:9px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:20px;border:1px solid rgba(232,160,32,.3);}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:all .3s;}
+.sync-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green);}
+.sync-dot.loading{background:var(--accent);animation:pulse .8s infinite;}
+.sync-dot.err{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-align:right;line-height:1.4;}
+.btn-logout{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text3);font-size:10px;cursor:pointer;}
+
+/* SCROLL */
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;padding-bottom:calc(var(--nav-h) + var(--safe-b) + 20px);}
+
+/* NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(var(--nav-h) + var(--safe-b));background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:flex-start;padding-top:6px;z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;background:none;border:none;cursor:pointer;position:relative;}
+.nav-item .ni{font-size:20px;line-height:1;}
+.nav-item .nl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;}
+.nav-item.active .nl{color:var(--accent);}
+.nav-item.active .ni{filter:drop-shadow(0 0 5px var(--accent));}
+.nav-notif{position:absolute;top:2px;right:calc(50% - 18px);min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* PAGES */
+.page{display:none;}.page.active{display:block;}
+.section-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:14px;}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;}
+.kc-a::before{background:var(--accent);}
+.kc-g::before{background:var(--green);}
+.kc-r::before{background:var(--red);}
+.kc-b::before{background:var(--blue);}
+.kpi-emoji{font-size:20px;margin-bottom:6px;display:block;}
+.kpi-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px;}
+.kpi-value{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--text);line-height:1;word-break:break-all;}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px;}
+.kpi-sub.up{color:var(--green);}
+.kpi-sub.dn{color:var(--red);}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* CHART */
+.chart-wrap{display:flex;align-items:flex-end;gap:4px;height:80px;padding-top:8px;}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;}
+.bar-lbl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+/* TX */
+.tx-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.tx-item:last-child{border-bottom:none;}
+.tx-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-right:10px;flex-shrink:0;}
+.txi-v{background:rgba(76,175,125,.12);}
+.txi-r{background:rgba(64,144,232,.12);}
+.tx-left{display:flex;align-items:center;min-width:0;}
+.tx-name{font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;}
+.tx-date{font-size:10px;color:var(--text3);margin-top:1px;}
+.tx-amount{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;flex-shrink:0;}
+.tx-pos{color:var(--green);}
+.tx-neg{color:var(--blue);}
+
+/* STOCK */
+.stock-item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);}
+.stock-item:last-child{border-bottom:none;}
+.stock-left{flex:1;min-width:0;}
+.stock-nom{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stock-meta{font-size:10px;color:var(--text3);margin-top:2px;}
+.stock-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;font-weight:700;}
+.sb-ok{background:rgba(76,175,125,.15);color:var(--green);}
+.sb-warn{background:rgba(232,160,32,.15);color:var(--accent);}
+.sb-bad{background:rgba(232,80,32,.15);color:var(--red);}
+
+/* ALERT */
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.alert-item:last-child{border-bottom:none;}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ad-r{background:var(--red);box-shadow:0 0 6px var(--red);}
+.ad-a{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+.alert-info{flex:1;min-width:0;}
+.alert-name{font-size:13px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.alert-desc{font-size:11px;color:var(--text3);}
+
+/* PROGRESS */
+.pw{margin-bottom:10px;}
+.ph{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;}
+.pl{color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;}
+.pv{color:var(--text);font-family:'DM Mono',monospace;}
+.pb{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.pf{height:100%;border-radius:3px;}
+
+/* BADGE */
+.bdg{font-size:10px;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:20px;}
+.bdg-r{background:rgba(232,80,32,.15);color:var(--red);}
+.bdg-g{background:rgba(76,175,125,.15);color:var(--green);}
+.bdg-a{background:rgba(232,160,32,.15);color:var(--accent);}
+.bdg-b{background:rgba(64,144,232,.15);color:var(--blue);}
+
+/* SEARCH */
+.sw{position:relative;margin-bottom:12px;}
+.sw input{width:100%;padding:10px 14px 10px 36px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;}
+.sw input:focus{border-color:var(--accent);}
+.si{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text3);}
+
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:10px;margin-bottom:14px;}
+.tab{flex:1;padding:7px;border-radius:7px;border:none;background:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;}
+.tab.active{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+
+/* SHEET */
+.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+.sheet-overlay.open{display:flex;}
+.sheet{background:var(--surface);border-radius:22px 22px 0 0;padding:20px 18px;padding-bottom:calc(24px + var(--safe-b));width:100%;max-width:480px;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:su .25s ease;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+.sheet-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:16px;color:var(--text);}
+.fg{margin-bottom:13px;}
+label{display:block;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:5px;}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--surface2);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sactions{display:flex;gap:10px;margin-top:18px;}
+.btn{padding:12px 20px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;text-align:center;flex:1;}
+.btn-a{background:var(--accent);color:#000;}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.btn-danger{background:rgba(232,80,32,.12);color:var(--red);border:1px solid rgba(232,80,32,.25);}
+.info-box{background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;}
+.ib-row{display:flex;justify-content:space-between;padding:3px 0;font-size:12px;}
+.ib-lbl{color:var(--text3);}
+.ib-val{color:var(--text);font-family:'DM Mono',monospace;font-weight:600;}
+
+/* STAT */
+.stat-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.stat-row:last-child{border-bottom:none;}
+.stat-lbl{font-size:13px;color:var(--text2);}
+.stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);}
+.stat-val.g{color:var(--green);}
+.stat-val.r{color:var(--red);}
+
+/* LIST */
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.list-item:last-child{border-bottom:none;}
+.list-av{width:40px;height:40px;border-radius:12px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.list-info{flex:1;min-width:0;}
+.list-name{font-size:14px;font-weight:600;color:var(--text);}
+.list-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+
+/* VENTE ITEM */
+.vente-item{padding:11px 0;border-bottom:1px solid var(--border);}
+.vente-item:last-child{border-bottom:none;}
+.vi-top{display:flex;justify-content:space-between;gap:8px;margin-bottom:3px;}
+.vi-nom{font-size:13px;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vi-total{font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);font-weight:700;flex-shrink:0;}
+.vi-bot{display:flex;justify-content:space-between;}
+.vi-info{font-size:10px;color:var(--text3);}
+.vi-benef{font-size:11px;color:var(--green);font-family:'DM Mono',monospace;}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 16px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;color:var(--text);z-index:999;opacity:0;transition:all .3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.6);pointer-events:none;max-width:90vw;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.empty{text-align:center;padding:36px 20px;color:var(--text3);font-size:13px;}
+.ei{font-size:36px;margin-bottom:10px;opacity:.4;display:block;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-logo">👔</div>
+  <div class="login-title">Pathé Fall</div>
+  <div class="login-sub">QUINCAMANAGER · PATRON</div>
+  <div class="login-card">
+    <span class="f-label">MOT DE PASSE</span>
+    <input class="f-input" type="password" id="login-mdp" placeholder="••••••••" onkeydown="if(event.key==='Enter')seConnecter()">
+    <button class="login-btn" onclick="seConnecter()">🔓 Accéder</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <span class="icon">🔧</span>
+    <h1>Pathé Fall</h1>
+    <span class="badge-patron">PATRON</span>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-dot loading" id="sync-dot"></div>
+    <div class="topbar-date" id="topbar-date"></div>
+    <button class="btn-logout" onclick="seDeconnecter()">🚪</button>
+  </div>
+</div>
+
+<!-- SCROLL -->
+<div class="scroll-area" id="scroll-area">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="section-title">Tableau de bord</div>
+    <div class="kpi-row">
+      <div class="kpi-card kc-a"><span class="kpi-emoji">💰</span><div class="kpi-label">VENTES DU JOUR</div><div class="kpi-value" id="kpi-vj">—</div><div class="kpi-sub up" id="kpi-mg">—</div></div>
+      <div class="kpi-card kc-g"><span class="kpi-emoji">📈</span><div class="kpi-label">BÉNÉFICE NET</div><div class="kpi-value" id="kpi-bn">—</div><div class="kpi-sub">aujourd'hui</div></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-card kc-r"><span class="kpi-emoji">⚠️</span><div class="kpi-label">MANQUANTS</div><div class="kpi-value" id="kpi-mq">—</div><div class="kpi-sub dn">à commander</div></div>
+      <div class="kpi-card kc-b"><span class="kpi-emoji">📦</span><div class="kpi-label">VALEUR STOCK</div><div class="kpi-value" id="kpi-inv">—</div><div class="kpi-sub" id="kpi-np">—</div></div>
+    </div>
+    <div class="card"><div class="card-title">👷 Performance gérant <span class="bdg bdg-a">aujourd'hui</span></div><div id="emp-perf"></div></div>
+    <div class="card"><div class="card-title">📊 Ventes 7 jours</div><div class="chart-wrap" id="chart-7j"></div></div>
+    <div class="card"><div class="card-title">🔔 Alertes stock <span class="bdg bdg-r" id="badge-mq">0</span></div><div id="dash-alertes"></div></div>
+    <div class="card"><div class="card-title">🕐 Dernières transactions</div><div id="dash-tx"></div></div>
+    <div class="card"><div class="card-title">🏆 Top produits</div><div id="dash-top"></div></div>
+  </div>
+
+  <!-- VENTES -->
+  <div class="page" id="page-ventes">
+    <div class="section-title">Toutes les ventes</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchVTab('liste',this)">Historique</button>
+      <button class="tab" onclick="switchVTab('gerant',this)">Par gérant</button>
+    </div>
+    <div id="vt-liste">
+      <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerVentes(this.value)"></div>
+      <div id="ventes-list"></div>
+    </div>
+    <div id="vt-gerant" style="display:none"><div id="ventes-par-gerant"></div></div>
+  </div>
+
+  <!-- STOCK -->
+  <div class="page" id="page-stock">
+    <div class="section-title">Stock & Matériaux</div>
+    <!-- Boutons gestion pour le patron -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <button onclick="ouvrir('sheet-produit')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;cursor:pointer;">
+        <span style="font-size:22px">➕</span><span style="font-size:10px;color:var(--accent);font-family:'DM Sans',sans-serif;font-weight:700">Nouveau</span>
+      </button>
+      <button onclick="ouvrir('sheet-edit-produit-sel')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--blue);border-radius:12px;cursor:pointer;">
+        <span style="font-size:22px">✏️</span><span style="font-size:10px;color:var(--blue);font-family:'DM Sans',sans-serif;font-weight:700">Modifier</span>
+      </button>
+      <button onclick="ouvrir('sheet-categorie')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;">
+        <span style="font-size:22px">🏷️</span><span style="font-size:10px;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:700">Catégorie</span>
+      </button>
+    </div>
+    <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerStock(this.value)"></div>
+    <select id="filtre-cat" onchange="filtrerStock()" style="width:100%;margin-bottom:12px;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;">
+      <option value="">📂 Toutes catégories</option>
+    </select>
+    <div id="stock-list"></div>
+  </div>
+
+  <!-- ALERTES -->
+  <div class="page" id="page-alertes">
+    <div class="section-title">Alertes</div>
+    <div class="card"><div class="card-title">🔴 Rupture totale</div><div id="al-rupture"></div></div>
+    <div class="card"><div class="card-title">🟡 Stock faible</div><div id="al-faible"></div></div>
+    <div class="card"><div class="card-title">📋 À commander</div><div id="al-commande"></div></div>
+  </div>
+
+  <!-- FINANCES -->
+  <div class="page" id="page-finances">
+    <div class="section-title">Finances</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchFinTab('jour',this)">Aujourd'hui</button>
+      <button class="tab" onclick="switchFinTab('semaine',this)">7 jours</button>
+      <button class="tab" onclick="switchFinTab('total',this)">Total</button>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-card kc-a"><span class="kpi-emoji">💵</span><div class="kpi-label">CA</div><div class="kpi-value" id="fin-ca">—</div></div>
+      <div class="kpi-card kc-g"><span class="kpi-emoji">✅</span><div class="kpi-label">BÉNÉFICE</div><div class="kpi-value" id="fin-bn">—</div></div>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-card kc-r"><span class="kpi-emoji">📤</span><div class="kpi-label">COÛTS</div><div class="kpi-value" id="fin-ct">—</div></div>
+      <div class="kpi-card kc-b"><span class="kpi-emoji">📊</span><div class="kpi-label">MARGE</div><div class="kpi-value" id="fin-mg">—</div></div>
+    </div>
+    <div class="card"><div class="card-title">Évolution <span class="bdg bdg-a" id="fin-label">Aujourd'hui</span></div><div class="chart-wrap" id="chart-fin"></div></div>
+    <div class="card"><div class="card-title">Par catégorie</div><div id="fin-cats"></div></div>
+    <div class="card"><div class="card-title">Résumé financier</div><div id="fin-details"></div></div>
+  </div>
+
+  <!-- GESTION -->
+  <div class="page" id="page-gestion">
+    <div class="section-title">Gestion</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+      <button onclick="ouvrir('sheet-fournisseur')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;"><span style="font-size:22px">🚚</span><span style="font-size:10px;color:var(--text2)">Fournisseur</span></button>
+      <button onclick="ouvrir('sheet-employe')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;"><span style="font-size:22px">👤</span><span style="font-size:10px;color:var(--text2)">Gérant</span></button>
+      <button onclick="ouvrir('sheet-categorie')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;"><span style="font-size:22px">🏷️</span><span style="font-size:10px;color:var(--text2)">Catégorie</span></button>
+    </div>
+    <div class="card"><div class="card-title">🚚 Fournisseurs <span class="bdg bdg-b" id="nb-fours">0</span></div><div id="four-list"></div></div>
+    <div class="card"><div class="card-title">👤 Gérants <span class="bdg bdg-b" id="nb-emps">0</span></div><div id="emp-list"></div></div>
+    <div class="card"><div class="card-title">📥 Réceptions récentes</div><div id="rec-list"></div></div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="ni">📊</span><span class="nl">ACCUEIL</span></button>
+  <button class="nav-item" onclick="goTo('ventes',this)"><span class="ni">💰</span><span class="nl">VENTES</span></button>
+  <button class="nav-item" onclick="goTo('stock',this)"><span class="ni">📦</span><span class="nl">STOCK</span></button>
+  <button class="nav-item" onclick="goTo('alertes',this)"><span class="ni">🔔</span><span class="nl">ALERTES</span><div class="nav-notif" id="nav-notif">0</div></button>
+  <button class="nav-item" onclick="goTo('finances',this)"><span class="ni">📈</span><span class="nl">FINANCES</span></button>
+  <button class="nav-item" onclick="goTo('gestion',this)"><span class="ni">⚙️</span><span class="nl">GESTION</span></button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<!-- SHEETS GESTION PATRON -->
+<div class="sheet-overlay" id="sheet-produit">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">➕ Nouveau matériel</div>
+    <div class="fg"><label>NOM *</label><input type="text" id="sp-nom" placeholder="Ex: Tournevis, Câble..."></div>
+    <div class="form-row">
+      <div class="fg"><label>CATÉGORIE *</label><select id="sp-cat"><option value="">Choisir...</option></select></div>
+      <div class="fg"><label>UNITÉ</label><select id="sp-unite"><option value="pièce">Pièce</option><option value="mètre">Mètre</option><option value="kg">Kg</option><option value="litre">Litre</option><option value="boite">Boite</option><option value="sac">Sac</option><option value="rouleau">Rouleau</option><option value="lot">Lot</option></select></div>
+    </div>
+    <div class="fg"><label>FOURNISSEUR</label><select id="sp-four"><option value="">Aucun</option></select></div>
+    <div class="form-row">
+      <div class="fg"><label>STOCK INITIAL</label><input type="number" id="sp-stock" value="0" min="0"></div>
+      <div class="fg"><label>SEUIL ALERTE</label><input type="number" id="sp-seuil" value="5" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>PRIX ACHAT (F)</label><input type="number" id="sp-achat" value="0"></div>
+      <div class="fg"><label>PRIX VENTE (F)</label><input type="number" id="sp-vente" value="0"></div>
+    </div>
+    <div class="fg"><label>DESCRIPTION</label><textarea id="sp-desc" placeholder="Marque, taille, référence..."></textarea></div>
+    <div class="sactions">
+      <button class="btn btn-ghost" onclick="fermer('sheet-produit')">Annuler</button>
+      <button class="btn btn-a" onclick="ajouterProduit()">✓ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheet-edit-produit">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">✏️ Modifier matériel</div>
+    <input type="hidden" id="ep-id">
+    <div class="fg"><label>NOM</label><input type="text" id="ep-nom"></div>
+    <div class="form-row">
+      <div class="fg"><label>CATÉGORIE</label><select id="ep-cat"></select></div>
+      <div class="fg"><label>UNITÉ</label><select id="ep-unite"><option value="pièce">Pièce</option><option value="mètre">Mètre</option><option value="kg">Kg</option><option value="litre">Litre</option><option value="boite">Boite</option><option value="sac">Sac</option><option value="rouleau">Rouleau</option><option value="lot">Lot</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>STOCK</label><input type="number" id="ep-stock" min="0"></div>
+      <div class="fg"><label>SEUIL</label><input type="number" id="ep-seuil" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>PRIX ACHAT</label><input type="number" id="ep-achat" min="0"></div>
+      <div class="fg"><label>PRIX VENTE</label><input type="number" id="ep-vente" min="0"></div>
+    </div>
+    <div class="fg"><label>DESCRIPTION</label><textarea id="ep-desc"></textarea></div>
+    <div class="sactions">
+      <button class="btn btn-danger" onclick="supprimerProduit()">🗑 Suppr.</button>
+      <button class="btn btn-a" onclick="sauvegarderProduit()">✓ Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheet-edit-produit-sel">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">✏️ Choisir le matériel à modifier</div>
+    <div class="fg"><label>MATÉRIEL</label><select id="sel-produit-edit"><option value="">Choisir...</option></select></div>
+    <div class="sactions">
+      <button class="btn btn-ghost" onclick="fermer('sheet-edit-produit-sel')">Annuler</button>
+      <button class="btn btn-a" onclick="ouvrirEditProduit(document.getElementById('sel-produit-edit').value)">✓ Modifier</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheet-fournisseur">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">🚚 Nouveau fournisseur</div>
+    <div class="fg"><label>NOM *</label><input type="text" id="sf-nom" placeholder="Entreprise..."></div>
+    <div class="fg"><label>CONTACT</label><input type="text" id="sf-contact" placeholder="Représentant..."></div>
+    <div class="fg"><label>TÉLÉPHONE</label><input type="text" id="sf-tel" placeholder="+221 ..."></div>
+    <div class="fg"><label>SPÉCIALITÉ</label><input type="text" id="sf-spec" placeholder="Plomberie, Électricité..."></div>
+    <div class="sactions">
+      <button class="btn btn-ghost" onclick="fermer('sheet-fournisseur')">Annuler</button>
+      <button class="btn btn-a" onclick="ajouterFournisseur()">✓ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheet-employe">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">👤 Nouveau gérant</div>
+    <div class="fg"><label>NOM *</label><input type="text" id="se-nom" placeholder="Prénom Nom"></div>
+    <div class="fg"><label>POSTE</label><input type="text" id="se-poste" placeholder="Gérant, Caissier..."></div>
+    <div class="fg"><label>TÉLÉPHONE</label><input type="text" id="se-tel" placeholder="+221 ..."></div>
+    <div class="fg"><label>SALAIRE (F/mois)</label><input type="number" id="se-salaire" placeholder="0"></div>
+    <div class="sactions">
+      <button class="btn btn-ghost" onclick="fermer('sheet-employe')">Annuler</button>
+      <button class="btn btn-a" onclick="ajouterEmploye()">✓ Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheet-categorie">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">🏷️ Nouvelle catégorie</div>
+    <div id="cats-ex" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+    <div class="fg"><label>NOM *</label><input type="text" id="sc-nom" placeholder="Ex: Plomberie..."></div>
+    <div class="sactions">
+      <button class="btn btn-ghost" onclick="fermer('sheet-categorie')">Annuler</button>
+      <button class="btn btn-a" onclick="ajouterCategorie()">✓ Créer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════
+//  CONFIG SUPABASE
+// ══════════════════════════════════
+const SUPA_URL = 'https://prazzxxhjatmxftfbiks.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByYXp6eHhoamF0bXhmdGZiaWtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjc3NTIsImV4cCI6MjA4OTcwMzc1Mn0.PV5qK7ZQopzTHDfNW8IexdjOno0z26BP0Gt3t7UUUdQ';
+const PASS    = 'Quinca123';
+const SESSION = 'qp_session';
+
+const H = {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
+async function sbGet(t,q=''){const r=await fetch(`${SUPA_URL}/rest/v1/${t}?${q}`,{headers:H});return r.json();}
+async function sbPost(t,d){const r=await fetch(`${SUPA_URL}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});return r.json();}
+async function sbPatch(t,id,d){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:H,body:JSON.stringify(d)});}
+async function sbDelete(t,id){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});}
+
+let S={produits:[],ventes:[],receptions:[],fournisseurs:[],employes:[],categories:['Outillage','Plomberie','Électricité','Peinture','Visserie','Serrurerie','Quincaillerie','Autre']};
+let currentPage='dashboard', finPeriod='jour', vTab='liste';
+
+function setSyncStatus(s){document.getElementById('sync-dot').className='sync-dot '+s;}
+
+async function charger(){
+  setSyncStatus('loading');
+  try{
+    const[p,v,r,f,e,c]=await Promise.all([
+      sbGet('produits','order=nom'),
+      sbGet('ventes','order=created_at.desc&limit=300'),
+      sbGet('receptions','order=created_at.desc&limit=50'),
+      sbGet('fournisseurs','order=nom'),
+      sbGet('employes','order=nom'),
+      sbGet('categories','limit=1'),
+    ]);
+    S.produits=p||[];S.ventes=v||[];S.receptions=r||[];S.fournisseurs=f||[];S.employes=e||[];
+    if(c&&c[0])S.categories=c[0].liste||S.categories;
+    setSyncStatus('ok');
+    updateNotif();
+    // Update filtre-cat
+    const sel=document.getElementById('filtre-cat');
+    if(sel)sel.innerHTML='<option value="">📂 Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }catch(e){setSyncStatus('err');toast('❌ Erreur connexion Supabase');}
+}
+
+function updateNotif(){
+  const n=S.produits.filter(p=>p.stock<=p.seuil).length;
+  document.getElementById('nav-notif').textContent=n;
+  document.getElementById('badge-mq').textContent=n;
+}
+
+function seConnecter(){
+  const mdp=document.getElementById('login-mdp').value;
+  document.getElementById('login-err').textContent='';
+  if(mdp!==PASS){document.getElementById('login-err').textContent='❌ Mot de passe incorrect';return;}
+  sessionStorage.setItem(SESSION,'1');
+  document.getElementById('login-screen').classList.add('hidden');
+  init();
+}
+function seDeconnecter(){if(!confirm('Se déconnecter ?'))return;sessionStorage.removeItem(SESSION);location.reload();}
+
+function goTo(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(btn)btn.classList.add('active');
+  document.getElementById('scroll-area').scrollTop=0;
+  currentPage=page;
+  charger().then(()=>{renderPage(page);updateNotif();});
+}
+function renderPage(p){
+  if(p==='dashboard')renderDashboard();
+  else if(p==='ventes')renderVentes();
+  else if(p==='stock')renderStock();
+  else if(p==='alertes')renderAlertes();
+  else if(p==='finances')renderFinances();
+  else if(p==='gestion')renderGestion();
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  const today=new Date().toLocaleDateString('fr-FR');
+  const vj=S.ventes.filter(v=>v.date===today);
+  const ca=vj.reduce((s,v)=>s+v.total,0);
+  const bn=vj.reduce((s,v)=>s+v.benef,0);
+  const mg=ca>0?Math.round(bn/ca*100):0;
+  const mq=S.produits.filter(p=>p.stock<=p.seuil).length;
+  const inv=S.produits.reduce((s,p)=>s+p.stock*p.achat,0);
+  document.getElementById('kpi-vj').textContent=fmtK(ca);
+  document.getElementById('kpi-bn').textContent=fmtK(bn);
+  document.getElementById('kpi-mg').textContent=`marge ${mg}%`;
+  document.getElementById('kpi-mq').textContent=mq;
+  document.getElementById('kpi-inv').textContent=fmtK(inv);
+  document.getElementById('kpi-np').textContent=S.produits.length+' produits';
+  updateNotif();
+
+  // Perf gérant
+  const gerants=[...new Set(S.ventes.filter(v=>v.date===today).map(v=>v.employe).filter(Boolean))];
+  document.getElementById('emp-perf').innerHTML=gerants.length===0
+    ?'<div class="empty" style="padding:12px"><span class="ei">👷</span>Aucune activité aujourd\'hui</div>'
+    :gerants.map(nom=>{const vv=S.ventes.filter(v=>v.date===today&&v.employe===nom);const empCa=vv.reduce((s,v)=>s+v.total,0);
+      return`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:10px"><div style="width:36px;height:36px;border-radius:10px;background:rgba(232,160,32,.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--accent)">${nom[0].toUpperCase()}</div><div><div style="font-size:13px;font-weight:600;color:var(--text)">${nom}</div><div style="font-size:10px;color:var(--text3)">${vv.length} vente(s)</div></div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">${fmtK(empCa)}</div></div></div>`;
+    }).join('');
+
+  // Chart
+  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const lbl=d.toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,2);const ds=d.toLocaleDateString('fr-FR');const cv=S.ventes.filter(v=>v.date===ds).reduce((s,v)=>s+v.total,0);days.push({lbl,cv});}
+  const mx=Math.max(...days.map(d=>d.cv),1);
+  document.getElementById('chart-7j').innerHTML=days.map(d=>`<div class="bar-group"><div class="bar" style="height:${Math.round(d.cv/mx*68)+4}px;background:${d.cv>0?'var(--accent)':'var(--border)'}"></div><span class="bar-lbl">${d.lbl}</span></div>`).join('');
+
+  // Alertes
+  const al=S.produits.filter(p=>p.stock<=p.seuil).slice(0,5);
+  document.getElementById('dash-alertes').innerHTML=al.length===0?'<div style="text-align:center;color:var(--text3);font-size:12px;padding:8px">✅ Aucun article critique</div>':al.map(p=>`<div class="alert-item"><div class="alert-dot ${p.stock===0?'ad-r':'ad-a'}"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">${p.cat}</div></div><span class="bdg ${p.stock===0?'bdg-r':'bdg-a'}">${p.stock===0?'RUPTURE':p.stock+' rest.'}</span></div>`).join('');
+
+  // TX
+  const allTx=[...S.ventes.slice(0,5).map(v=>({...v,type:'v'})),...S.receptions.slice(0,3).map(r=>({...r,type:'r'}))].sort((a,b)=>(b.ts||'').localeCompare(a.ts||'')).slice(0,6);
+  document.getElementById('dash-tx').innerHTML=allTx.length===0?'<div class="empty" style="padding:12px"><span class="ei">💸</span>Aucune transaction</div>':allTx.map(t=>t.type==='v'
+    ?`<div class="tx-item"><div class="tx-left"><div class="tx-icon txi-v">💰</div><div><div class="tx-name">${t.nom}</div><div class="tx-date">${t.date} · ${t.employe||'?'}</div></div></div><div class="tx-amount tx-pos">+${fmt(t.total)}</div></div>`
+    :`<div class="tx-item"><div class="tx-left"><div class="tx-icon txi-r">📥</div><div><div class="tx-name">${t.nom}</div><div class="tx-date">${t.date} · +${t.qty}</div></div></div><div class="tx-amount tx-neg">-${fmt(t.total)}</div></div>`
+  ).join('');
+
+  // Top produits
+  const topM={};S.ventes.forEach(v=>{topM[v.nom]=(topM[v.nom]||0)+v.total;});
+  const top=Object.entries(topM).sort((a,b)=>b[1]-a[1]).slice(0,5);const mxT=top[0]?.[1]||1;
+  document.getElementById('dash-top').innerHTML=top.length===0?'<div class="empty" style="padding:12px">Aucune donnée</div>':top.map(([n,v])=>`<div class="pw"><div class="ph"><span class="pl">${n}</span><span class="pv">${fmtK(v)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(v/mxT*100)}%;background:var(--accent)"></div></div></div>`).join('');
+}
+
+// ── VENTES ──
+let vtabActif='liste';
+function switchVTab(tab,btn){vtabActif=tab;document.querySelectorAll('#page-ventes .tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('vt-liste').style.display=tab==='liste'?'block':'none';document.getElementById('vt-gerant').style.display=tab==='gerant'?'block':'none';if(tab==='gerant')renderVentesParGerant();}
+function renderVentes(filtre=''){
+  const rows=S.ventes.filter(v=>!filtre||v.nom.toLowerCase().includes(filtre.toLowerCase()));
+  document.getElementById('ventes-list').innerHTML=rows.length===0?'<div class="empty"><span class="ei">💸</span>Aucune vente</div>':rows.map(v=>{const mg=v.pv>0?Math.round((v.pv-v.pa)/v.pv*100):0;return`<div class="vente-item"><div class="vi-top"><div class="vi-nom">${v.nom}</div><div class="vi-total">${fmt(v.total)}</div></div><div class="vi-bot"><div class="vi-info">${v.date} · qté ${v.qty} ${v.unite||''} · ${v.employe||'?'} ${v.client?'· '+v.client:''}</div><div class="vi-benef">+${fmt(v.benef)} (${mg}%)</div></div></div>`;}).join('');
+}
+function filtrerVentes(v){renderVentes(v);}
+function renderVentesParGerant(){
+  const gerants=[...new Set(S.ventes.map(v=>v.employe).filter(Boolean))];
+  document.getElementById('ventes-par-gerant').innerHTML=gerants.length===0?'<div class="empty"><span class="ei">👷</span>Aucune vente</div>':gerants.map(nom=>{
+    const vv=S.ventes.filter(v=>v.employe===nom);const ca=vv.reduce((s,v)=>s+v.total,0);const bn=vv.reduce((s,v)=>s+v.benef,0);
+    const today=new Date().toLocaleDateString('fr-FR');const caJ=S.ventes.filter(v=>v.employe===nom&&v.date===today).reduce((s,v)=>s+v.total,0);
+    return`<div class="card" style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="width:40px;height:40px;border-radius:12px;background:rgba(232,160,32,.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${nom[0].toUpperCase()}</div><div style="flex:1"><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text)">${nom}</div><div style="font-size:11px;color:var(--text3)">${vv.length} ventes au total</div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);font-weight:700">${fmtK(caJ)}</div><div style="font-size:10px;color:var(--text3)">aujourd'hui</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">CA TOTAL</div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--accent)">${fmtK(ca)}</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">BÉNÉFICE</div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--green)">${fmtK(bn)}</div></div></div></div>`;
+  }).join('');
+}
+
+// ── STOCK ──
+function renderStock(filtre=''){
+  const cat=document.getElementById('filtre-cat')?.value||'';
+  let prods=S.produits;
+  if(filtre)prods=prods.filter(p=>p.nom.toLowerCase().includes(filtre.toLowerCase()));
+  if(cat)prods=prods.filter(p=>p.cat===cat);
+  prods=[...prods].sort((a,b)=>a.stock-b.stock);
+  document.getElementById('stock-list').innerHTML=prods.length===0?'<div class="empty"><span class="ei">📦</span>Aucun article</div>':prods.map(p=>{
+    const mg=p.vente>0?Math.round((p.vente-p.achat)/p.vente*100):0;
+    const cls=p.stock===0?'sb-bad':p.stock<=p.seuil?'sb-warn':'sb-ok';
+    const lbl=p.stock===0?'RUPTURE':p.stock<=p.seuil?`⚠ ${p.stock}`:p.stock;
+    return`<div class="stock-item"><div class="stock-left"><div class="stock-nom">${p.nom}</div><div class="stock-meta">${p.cat} · ${p.unite||'pièce'} · marge ${mg}% · Vente: ${fmt(p.vente)}</div>${p.description?`<div class="stock-meta" style="font-style:italic">${p.description}</div>`:''}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="stock-badge ${cls}">${lbl} ${p.stock>0?p.unite||'':''}</span><button class="bdg bdg-a" style="border:none;cursor:pointer;padding:4px 8px" onclick="ouvrirEditProduit('${p.id}')">✏️</button></div></div>`;
+  }).join('');
+}
+function filtrerStock(v){renderStock(typeof v==='string'?v:'');}
+
+// ── ALERTES ──
+function renderAlertes(){
+  const rupt=S.produits.filter(p=>p.stock===0);const faib=S.produits.filter(p=>p.stock>0&&p.stock<=p.seuil);
+  document.getElementById('al-rupture').innerHTML=rupt.length===0?'<div class="empty" style="padding:16px"><span class="ei">✅</span>Aucune rupture</div>':rupt.map(p=>`<div class="alert-item"><div class="alert-dot ad-r"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">${p.cat} · ${p.four||'—'}</div></div><span class="bdg bdg-r">0</span></div>`).join('');
+  document.getElementById('al-faible').innerHTML=faib.length===0?'<div class="empty" style="padding:16px"><span class="ei">✅</span>Stock suffisant</div>':faib.map(p=>`<div class="alert-item"><div class="alert-dot ad-a"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">Stock: ${p.stock} · Seuil: ${p.seuil}</div></div><span class="bdg bdg-a">${p.stock} rest.</span></div>`).join('');
+  const cmd=[...rupt,...faib];
+  document.getElementById('al-commande').innerHTML=cmd.length===0?'<div class="empty" style="padding:16px"><span class="ei">🎉</span>Rien à commander</div>':cmd.map(p=>{const qte=Math.max(p.seuil*3-p.stock,p.seuil);return`<div class="alert-item"><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">${p.four||'—'} · stock: ${p.stock}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:700">${qte} ${p.unite||''}</div><div style="font-size:10px;color:var(--text3)">${fmt(qte*p.achat)}</div></div></div>`;}).join('');
+}
+
+// ── FINANCES ──
+function switchFinTab(p,btn){finPeriod=p;document.querySelectorAll('#page-finances .tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const labels={jour:"Aujourd'hui",semaine:'7 jours',total:'Total'};document.getElementById('fin-label').textContent=labels[p];renderFinances();}
+function getFinV(){const today=new Date().toLocaleDateString('fr-FR');if(finPeriod==='jour')return S.ventes.filter(v=>v.date===today);if(finPeriod==='semaine'){const dates=[];for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);dates.push(d.toLocaleDateString('fr-FR'));}return S.ventes.filter(v=>dates.includes(v.date));}return S.ventes;}
+function renderFinances(){
+  const ventes=getFinV();const ca=ventes.reduce((s,v)=>s+v.total,0);const ct=ventes.reduce((s,v)=>s+v.pa*v.qty,0);const bn=ventes.reduce((s,v)=>s+v.benef,0);const mg=ca>0?Math.round(bn/ca*100):0;
+  document.getElementById('fin-ca').textContent=fmtK(ca);document.getElementById('fin-ct').textContent=fmtK(ct);document.getElementById('fin-bn').textContent=fmtK(bn);document.getElementById('fin-mg').textContent=mg+'%';
+  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toLocaleDateString('fr-FR');const lbl=d.toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,2);const cv=S.ventes.filter(v=>v.date===ds).reduce((s,v)=>s+v.total,0);const cb=S.ventes.filter(v=>v.date===ds).reduce((s,v)=>s+v.benef,0);days.push({lbl,cv,cb});}
+  const mxD=Math.max(...days.map(d=>d.cv),1);
+  document.getElementById('chart-fin').innerHTML=days.map(d=>`<div class="bar-group" style="gap:2px"><div class="bar" style="height:${Math.round(d.cv/mxD*68)+4}px;background:var(--accent)"></div><div class="bar" style="height:${Math.round(d.cb/mxD*68)+4}px;background:var(--green)"></div><span class="bar-lbl">${d.lbl}</span></div>`).join('');
+  const catM={};ventes.forEach(v=>{const p=S.produits.find(x=>x.id===v.produit_id);const c=p?.cat||'Autre';catM[c]=(catM[c]||0)+v.total;});
+  const cats=Object.entries(catM).sort((a,b)=>b[1]-a[1]);const mxC=cats[0]?.[1]||1;
+  document.getElementById('fin-cats').innerHTML=cats.length===0?'<div class="empty" style="padding:12px">Aucune vente</div>':cats.map(([c,v])=>`<div class="pw"><div class="ph"><span class="pl">${c}</span><span class="pv">${fmtK(v)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(v/mxC*100)}%;background:var(--blue)"></div></div></div>`).join('');
+  const salaires=S.employes.reduce((s,e)=>s+(e.salaire||0),0);
+  document.getElementById('fin-details').innerHTML=`
+    <div class="stat-row"><span class="stat-lbl">Nombre de ventes</span><span class="stat-val">${ventes.length}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Panier moyen</span><span class="stat-val">${ventes.length?fmt(Math.round(ca/ventes.length)):fmt(0)}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Chiffre d'affaires</span><span class="stat-val">${fmt(ca)}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Coûts marchandises</span><span class="stat-val r">- ${fmt(ct)}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Bénéfice brut</span><span class="stat-val g">+ ${fmt(bn)}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Masse salariale/mois</span><span class="stat-val">${fmt(salaires)}</span></div>
+    <div class="stat-row"><span class="stat-lbl">Marge nette</span><span class="stat-val g">${mg}%</span></div>
+    <div class="stat-row"><span class="stat-lbl">Valeur du stock</span><span class="stat-val">${fmt(S.produits.reduce((s,p)=>s+p.stock*p.achat,0))}</span></div>`;
+}
+
+// ── GESTION ──
+function renderGestion(){
+  document.getElementById('nb-fours').textContent=S.fournisseurs.length;document.getElementById('nb-emps').textContent=S.employes.length;
+  document.getElementById('four-list').innerHTML=S.fournisseurs.length===0?'<div class="empty" style="padding:12px">Aucun fournisseur</div>':S.fournisseurs.map(f=>`<div class="list-item"><div class="list-av">🚚</div><div class="list-info"><div class="list-name">${f.nom}</div><div class="list-sub">${f.tel||'—'} · ${f.spec||'—'}</div></div></div>`).join('');
+  document.getElementById('emp-list').innerHTML=S.employes.length===0?'<div class="empty" style="padding:12px">Aucun gérant</div>':S.employes.map(e=>`<div class="list-item"><div class="list-av">👤</div><div class="list-info"><div class="list-name">${e.nom}</div><div class="list-sub">${e.poste||'—'} · ${e.salaire?fmt(e.salaire)+'/mois':'—'}</div></div><span class="bdg ${e.actif?'bdg-g':'bdg-r'}">${e.actif?'Actif':'Inactif'}</span></div>`).join('');
+  document.getElementById('rec-list').innerHTML=S.receptions.length===0?'<div class="empty" style="padding:12px">Aucune réception</div>':S.receptions.slice(0,8).map(r=>`<div class="tx-item"><div class="tx-left"><div class="tx-icon txi-r">📥</div><div><div class="tx-name">${r.nom}</div><div class="tx-date">${r.date} · +${r.qty} ${r.unite||''} · ${r.employe||'?'}</div></div></div><div class="tx-amount tx-neg">${fmt(r.total)}</div></div>`).join('');
+}
+
+// ── ACTIONS PATRON (gestion stock/fournisseurs) ──
+async function ajouterProduit(){
+  const nom=document.getElementById('sp-nom').value.trim();const cat=document.getElementById('sp-cat').value;
+  if(!nom||!cat){toast('⚠️ Nom et catégorie obligatoires');return;}
+  try{
+    await sbPost('produits',{nom,cat,unite:document.getElementById('sp-unite').value||'pièce',four:document.getElementById('sp-four').value||'',description:document.getElementById('sp-desc').value||'',stock:parseInt(document.getElementById('sp-stock').value)||0,seuil:parseInt(document.getElementById('sp-seuil').value)||5,achat:parseInt(document.getElementById('sp-achat').value)||0,vente:parseInt(document.getElementById('sp-vente').value)||0,date_ajout:new Date().toLocaleDateString('fr-FR')});
+    fermer('sheet-produit');toast(`✅ "${nom}" ajouté et sauvegardé`);await charger();renderStock();updateNotif();
+  }catch(e){toast('❌ Erreur: '+e.message);}
+}
+
+function ouvrirEditProduit(id){
+  if(!id){toast('⚠️ Choisis un matériel');return;}
+  const p=S.produits.find(x=>x.id===id);if(!p)return;
+  fermer('sheet-edit-produit-sel');
+  document.getElementById('ep-id').value=id;document.getElementById('ep-nom').value=p.nom;document.getElementById('ep-desc').value=p.description||'';document.getElementById('ep-stock').value=p.stock;document.getElementById('ep-seuil').value=p.seuil;document.getElementById('ep-achat').value=p.achat;document.getElementById('ep-vente').value=p.vente;
+  document.getElementById('ep-cat').innerHTML=S.categories.map(c=>`<option value="${c}" ${c===p.cat?'selected':''}>${c}</option>`).join('');
+  document.getElementById('ep-unite').value=p.unite||'pièce';
+  ouvrir('sheet-edit-produit');
+}
+async function sauvegarderProduit(){
+  const id=document.getElementById('ep-id').value;
+  try{await sbPatch('produits',id,{nom:document.getElementById('ep-nom').value,cat:document.getElementById('ep-cat').value,unite:document.getElementById('ep-unite').value,description:document.getElementById('ep-desc').value,stock:parseInt(document.getElementById('ep-stock').value)||0,seuil:parseInt(document.getElementById('ep-seuil').value)||5,achat:parseInt(document.getElementById('ep-achat').value)||0,vente:parseInt(document.getElementById('ep-vente').value)||0});fermer('sheet-edit-produit');toast('✅ Matériel mis à jour sur Supabase');await charger();renderStock();updateNotif();}catch(e){toast('❌ Erreur');}
+}
+async function supprimerProduit(){
+  const id=document.getElementById('ep-id').value;const p=S.produits.find(x=>x.id===id);
+  if(!confirm(`Supprimer "${p?.nom}" ?`))return;
+  try{await sbDelete('produits',id);fermer('sheet-edit-produit');toast('🗑️ Supprimé de Supabase');await charger();renderStock();updateNotif();}catch(e){toast('❌ Erreur');}
+}
+async function ajouterFournisseur(){
+  const nom=document.getElementById('sf-nom').value.trim();if(!nom){toast('⚠️ Nom obligatoire');return;}
+  try{await sbPost('fournisseurs',{nom,contact:document.getElementById('sf-contact').value,tel:document.getElementById('sf-tel').value,spec:document.getElementById('sf-spec').value});fermer('sheet-fournisseur');toast('✅ Fournisseur ajouté sur Supabase');await charger();renderGestion();}catch(e){toast('❌ Erreur');}
+}
+async function ajouterEmploye(){
+  const nom=document.getElementById('se-nom').value.trim();if(!nom){toast('⚠️ Nom obligatoire');return;}
+  try{await sbPost('employes',{nom,poste:document.getElementById('se-poste').value,tel:document.getElementById('se-tel').value,salaire:parseInt(document.getElementById('se-salaire').value)||0,actif:true});fermer('sheet-employe');toast('✅ Gérant ajouté sur Supabase');await charger();renderGestion();}catch(e){toast('❌ Erreur');}
+}
+async function ajouterCategorie(){
+  const nom=document.getElementById('sc-nom').value.trim();if(!nom){toast('⚠️ Entrez un nom');return;}
+  if(!S.categories.includes(nom)){S.categories.push(nom);const existing=await sbGet('categories','limit=1');if(existing&&existing[0])await sbPatch('categories',existing[0].id,{liste:S.categories});else await sbPost('categories',{liste:S.categories});}
+  document.getElementById('sc-nom').value='';fermer('sheet-categorie');toast('✅ Catégorie créée sur Supabase');await charger();
+}
+
+// ── SHEETS ──
+function ouvrir(id){
+  if(id==='sheet-produit'){['sp-nom','sp-desc'].forEach(i=>document.getElementById(i).value='');document.getElementById('sp-unite').value='pièce';document.getElementById('sp-cat').innerHTML='<option value="">Choisir...</option>'+S.categories.map(c=>`<option>${c}</option>`).join('');document.getElementById('sp-four').innerHTML='<option value="">Aucun</option>'+S.fournisseurs.map(f=>`<option>${f.nom}</option>`).join('');['sp-stock','sp-achat','sp-vente'].forEach(i=>document.getElementById(i).value=0);document.getElementById('sp-seuil').value=5;}
+  if(id==='sheet-edit-produit-sel'){document.getElementById('sel-produit-edit').innerHTML='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}">${p.nom}</option>`).join('');}
+  if(id==='sheet-categorie'){document.getElementById('sc-nom').value='';document.getElementById('cats-ex').innerHTML=S.categories.map(c=>`<span class="bdg bdg-b" style="padding:5px 10px">${c}</span>`).join('');}
+  document.getElementById(id).classList.add('open');
+}
+function fermer(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.sheet-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ── UTILS ──
+function fmt(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n))+' F';}
+function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M F';if(n>=1000)return Math.round(n/1000)+'k F';return Math.round(n)+' F';}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
+function updateDate(){const d=new Date();document.getElementById('topbar-date').innerHTML=d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()+'<br>'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+updateDate();setInterval(updateDate,30000);
+
+async function init(){await charger();renderPage(currentPage);}
+if(sessionStorage.getItem(SESSION)==='1'){document.getElementById('login-screen').classList.add('hidden');init();}
+setInterval(async()=>{if(sessionStorage.getItem(SESSION)==='1'){await charger();renderPage(currentPage);}},30000);
+</script>
+</body>
+</html>
