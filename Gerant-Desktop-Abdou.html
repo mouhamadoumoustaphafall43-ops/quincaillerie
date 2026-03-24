@@ -76,9 +76,6 @@ nav{flex:1;padding:14px 0;}
 .kpi-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);line-height:1;}
 .kpi-sub{font-size:11px;color:var(--text3);margin-top:5px;}
 
-/* GRID */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
-
 /* CARD */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px;}
 .card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
@@ -89,25 +86,13 @@ th{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-transf
 td{padding:10px 12px;font-size:13px;color:var(--text2);border-bottom:1px solid rgba(30,45,69,.5);}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,.02);color:var(--text);}
-
-/* BADGE */
-.bdg{font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:20px;}
-.bdg-g{background:rgba(0,200,150,.15);color:var(--accent);}
-.bdg-r{background:rgba(232,80,32,.15);color:var(--red);}
-.bdg-a{background:rgba(240,165,0,.15);color:var(--orange);}
-.bdg-b{background:rgba(64,144,232,.15);color:var(--blue);}
+td strong{color:var(--text);font-weight:500;}
 
 /* BTN */
 .btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:600;transition:all .15s;}
 .btn-primary{background:var(--accent);color:#000;}
 .btn-blue{background:var(--blue);color:#fff;}
 .btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
-
-/* SEARCH */
-.sw{position:relative;margin-bottom:16px;}
-.sw input{width:100%;padding:9px 14px 9px 36px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;}
-.sw input:focus{border-color:var(--accent);}
-.si{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text3);}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
@@ -116,48 +101,17 @@ tr:hover td{background:rgba(255,255,255,.02);color:var(--text);}
 .modal-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;color:var(--text);}
 .fg{margin-bottom:14px;}
 label{display:block;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:5px;}
-input[type=text],input[type=number],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+input[type=text],input[type=number],select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;}
 
-/* STOCK ITEM */
-.stock-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;font-weight:700;}
-.sb-ok{background:rgba(0,200,150,.15);color:var(--accent);}
-.sb-warn{background:rgba(240,165,0,.15);color:var(--orange);}
-.sb-bad{background:rgba(232,80,32,.15);color:var(--red);}
+/* BADGE */
+.bdg{font-size:10px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:20px;}
+.bdg-g{background:rgba(0,200,150,.15);color:var(--accent);}
+.bdg-r{background:rgba(232,80,32,.15);color:var(--red);}
+.bdg-a{background:rgba(240,165,0,.15);color:var(--orange);}
 
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:13px;color:var(--text);z-index:9999;opacity:0;transition:all .3s;box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:none;}
 .toast.show{opacity:1;}
-.info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;}
-.ib-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;}
-.ib-lbl{color:var(--text3);}
-.ib-val{color:var(--text);font-family:'DM Mono',monospace;font-weight:600;}
-.total-preview{background:linear-gradient(135deg,rgba(0,200,150,.15),rgba(0,200,150,.05));border:1px solid rgba(0,200,150,.3);border-radius:10px;padding:14px;margin-bottom:14px;display:none;}
-.tp-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px;}
-.tp-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);}
-.tp-sub{font-size:11px;color:var(--text2);margin-top:4px;font-family:'DM Mono',monospace;}
-.chart-bars{display:flex;align-items:flex-end;gap:8px;height:100px;padding-top:8px;}
-.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
-.bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:opacity .2s;cursor:pointer;}
-.bar:hover{opacity:.7;}
-.bar-lbl{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;}
-.alert-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
-.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.ad-r{background:var(--red);}
-.ad-a{background:var(--orange);}
-.alert-info{flex:1;}
-.alert-name{font-size:13px;font-weight:500;}
-.alert-desc{font-size:11px;color:var(--text3);}
-.pw{margin-bottom:10px;}
-.ph{display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;}
-.pl{color:var(--text2);}
-.pv{color:var(--text);font-family:'DM Mono',monospace;}
-.pb{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
-.pf{height:100%;border-radius:3px;}
-.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px;}
-.ei{font-size:36px;margin-bottom:10px;opacity:.4;display:block;}
 </style>
 </head>
 <body>
@@ -189,11 +143,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
   </div>
   <nav>
     <div class="nav-section">
-      <div class="nav-label">Principal</div>
       <button class="nav-btn active" onclick="goTo('dashboard',this)"><span class="ni">📊</span> Tableau de bord</button>
       <button class="nav-btn" onclick="goTo('ventes',this)"><span class="ni">💰</span> Mes ventes</button>
       <button class="nav-btn" onclick="goTo('stock',this)"><span class="ni">📦</span> Stock</button>
-      <button class="nav-btn" onclick="goTo('alertes',this)"><span class="ni">🔔</span> Alertes</button>
     </div>
   </nav>
   <div class="sidebar-footer">
@@ -206,45 +158,27 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 </aside>
 
 <main class="main">
-
   <div class="page active" id="page-dashboard">
     <div class="page-header">
-      <div>
-        <div class="page-title">Bonjour Abdou 👋</div>
-        <div class="page-sub" id="dash-date">—</div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-blue" onclick="ouvrirReception()">📥 Réceptionner</button>
-        <button class="btn btn-primary" onclick="ouvrirVente()">💰 Nouvelle vente</button>
-      </div>
+      <div><div class="page-title">Bonjour Abdou 👋</div><div class="page-sub" id="dash-date">—</div></div>
+      <button class="btn btn-primary" onclick="ouvrirVente()">💰 Nouvelle vente</button>
     </div>
     <div class="kpi-grid">
-      <div class="kpi-card kc-a"><span class="kpi-emoji">💰</span><div class="kpi-label">MES VENTES AUJOURD'HUI</div><div class="kpi-value" id="kpi-vj">—</div><div class="kpi-sub" id="kpi-nb-vj">— ventes</div></div>
-      <div class="kpi-card kc-o"><span class="kpi-emoji">💵</span><div class="kpi-label">BÉNÉFICE GÉNÉRÉ</div><div class="kpi-value" id="kpi-bn">—</div><div class="kpi-sub" id="kpi-mg">marge —</div></div>
-      <div class="kpi-card kc-r"><span class="kpi-emoji">⚠️</span><div class="kpi-label">RUPTURES STOCK</div><div class="kpi-value" id="kpi-rupt">—</div><div class="kpi-sub">à signaler patron</div></div>
-      <div class="kpi-card kc-b"><span class="kpi-emoji">📦</span><div class="kpi-label">ARTICLES DISPONIBLES</div><div class="kpi-value" id="kpi-dispo">—</div><div class="kpi-sub" id="kpi-np">— produits</div></div>
-    </div>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-title">📊 Mes ventes — 7 jours</div>
-        <div class="chart-bars" id="chart-7j"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">🔔 Alertes stock <span class="bdg bdg-r" id="badge-mq">0</span></div>
-        <div id="dash-alertes"></div>
-      </div>
+      <div class="kpi-card kc-a"><span class="kpi-emoji">💰</span><div class="kpi-label">VENTES JOUR</div><div class="kpi-value" id="kpi-vj">—</div></div>
+      <div class="kpi-card kc-o"><span class="kpi-emoji">💵</span><div class="kpi-label">BÉNÉFICE</div><div class="kpi-value" id="kpi-bn">—</div></div>
+      <div class="kpi-card kc-r"><span class="kpi-emoji">⚠️</span><div class="kpi-label">RUPTURES</div><div class="kpi-value" id="kpi-rupt">—</div></div>
+      <div class="kpi-card kc-b"><span class="kpi-emoji">📦</span><div class="kpi-label">TOTAL ARTICLES</div><div class="kpi-value" id="kpi-dispo">—</div></div>
     </div>
   </div>
 
   <div class="page" id="page-ventes">
     <div class="page-header">
-      <div><div class="page-title">Mes Ventes</div><div class="page-sub">HISTORIQUE DE MES VENTES</div></div>
+      <div class="page-title">Mes Ventes</div>
       <button class="btn btn-primary" onclick="ouvrirVente()">💰 Nouvelle vente</button>
     </div>
     <div class="card">
-      <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerVentes(this.value)"></div>
       <table>
-        <thead><tr><th>Date</th><th>Article</th><th>Qté</th><th>Total</th><th>Bénéfice</th><th>Client</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Date</th><th>Article</th><th>Qté</th><th>Total</th><th>Actions</th></tr></thead>
         <tbody id="ventes-table"></tbody>
       </table>
     </div>
@@ -252,114 +186,45 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 
   <div class="page" id="page-stock">
     <div class="page-header">
-      <div><div class="page-title">Stock disponible</div><div class="page-sub">TOUS LES MATÉRIAUX EN STOCK</div></div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost" onclick="ouvrirModal('modal-produit')">➕ Nouveau matériel</button>
-        <button class="btn btn-blue" onclick="ouvrirReception()">📥 Réceptionner</button>
-      </div>
+      <div class="page-title">Stock</div>
+      <button class="btn btn-ghost" onclick="ouvrirModal('modal-produit')">➕ Nouveau matériel</button>
     </div>
     <div class="card">
-      <div style="display:flex;gap:12px;margin-bottom:16px">
-        <div class="sw" style="flex:1;margin-bottom:0"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerStock(this.value)"></div>
-        <select id="filtre-cat" onchange="filtrerStock()" style="width:180px"><option value="">Toutes catégories</option></select>
-      </div>
       <table>
-        <thead><tr><th>Article</th><th>Catégorie</th><th>Stock</th><th>Prix Vente</th><th>Statut</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Article</th><th>Catégorie</th><th>Stock</th><th>Prix Vente</th><th>Actions</th></tr></thead>
         <tbody id="stock-table"></tbody>
       </table>
     </div>
   </div>
-
-  <div class="page" id="page-alertes">
-    <div class="page-header"><div><div class="page-title">Alertes Stock</div><div class="page-sub">ARTICLES À COMMANDER</div></div></div>
-    <div class="card">
-      <table>
-        <thead><tr><th>Article</th><th>Stock actuel</th><th>Seuil min.</th><th>Qté à commander</th><th>Action</th></tr></thead>
-        <tbody id="al-table"></tbody>
-      </table>
-    </div>
-  </div>
-
 </main>
-
-<div class="modal-overlay" id="modal-vente">
-  <div class="modal">
-    <div class="modal-title">💰 Enregistrer une vente</div>
-    <div class="fg"><label>ARTICLE VENDU *</label><select id="sv-produit" onchange="onSelectProduit()"></select></div>
-    <div id="sv-info" style="display:none"><div class="info-box"><div class="ib-row"><span class="ib-lbl">Disponible</span><span class="ib-val" id="sv-dispo"></span></div><div class="ib-row"><span class="ib-lbl">Prix conseillé</span><span class="ib-val" id="sv-prix-ref"></span></div></div></div>
-    <div class="form-row">
-      <div class="fg"><label>QUANTITÉ *</label><input type="number" id="sv-qty" value="1" min="1" oninput="calcVente()"></div>
-      <div class="fg"><label>PRIX UNITAIRE *</label><input type="number" id="sv-prix" oninput="calcVente()"></div>
-    </div>
-    <div class="fg"><label>CLIENT</label><input type="text" id="sv-client"></div>
-    <div class="total-preview" id="sv-total-box"><div class="tp-label">TOTAL</div><div class="tp-val" id="sv-total"></div><div id="sv-benef" class="tp-sub"></div></div>
-    <div class="modal-actions"><button class="btn btn-ghost" onclick="fermerModal('modal-vente')">Annuler</button><button class="btn btn-primary" onclick="validerVente()">Valider</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-reception">
-  <div class="modal">
-    <div class="modal-title">📥 Réceptionner livraison</div>
-    <div class="fg"><label>ARTICLE REÇU *</label><select id="sr-produit" onchange="onSelectReception()"></select></div>
-    <div class="form-row">
-      <div class="fg"><label>QUANTITÉ *</label><input type="number" id="sr-qty" value="1" min="1"></div>
-      <div class="fg"><label>PRIX ACHAT UNITAIRE</label><input type="number" id="sr-prix"></div>
-    </div>
-    <div class="modal-actions"><button class="btn btn-ghost" onclick="fermerModal('modal-reception')">Annuler</button><button class="btn btn-blue" onclick="validerReception()">Réceptionner</button></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-edit-produit">
-  <div class="modal">
-    <div class="modal-title">✏️ Modifier l'article</div>
-    <input type="hidden" id="ep-id">
-    <div class="fg"><label>NOM DU MATÉRIEL</label><input type="text" id="ep-nom"></div>
-    <div class="form-row">
-        <div class="fg"><label>PRIX ACHAT (F)</label><input type="number" id="ep-achat"></div>
-        <div class="fg"><label>PRIX VENTE (F)</label><input type="number" id="ep-vente"></div>
-    </div>
-    <div class="form-row">
-        <div class="fg"><label>STOCK ACTUEL</label><input type="number" id="ep-stock"></div>
-        <div class="fg"><label>SEUIL ALERTE</label><input type="number" id="ep-seuil"></div>
-    </div>
-    <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="fermerModal('modal-edit-produit')">Annuler</button>
-        <button class="btn" style="background:var(--red); color:white" onclick="supprimerProduit()">Supprimer l'article</button>
-        <button class="btn btn-primary" onclick="sauvegarderProduit()">Enregistrer</button>
-    </div>
-  </div>
-</div>
 
 <div class="modal-overlay" id="modal-edit-vente">
   <div class="modal">
     <div class="modal-title">✏️ Modifier la vente</div>
     <input type="hidden" id="ev-id">
-    <div class="form-row">
-      <div class="fg"><label>QUANTITÉ</label><input type="number" id="ev-qty"></div>
-      <div class="fg"><label>PRIX UNITAIRE</label><input type="number" id="ev-prix"></div>
+    <div class="fg"><label>QUANTITÉ</label><input type="number" id="ev-qty" min="1"></div>
+    <div class="fg"><label>PRIX UNITAIRE (F)</label><input type="number" id="ev-prix" min="0"></div>
+    <div class="modal-actions" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-edit-vente')">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderVente()">✓ Sauvegarder</button>
     </div>
-    <div class="fg"><label>CLIENT</label><input type="text" id="ev-client"></div>
-    <div class="modal-actions"><button class="btn btn-ghost" onclick="fermerModal('modal-edit-vente')">Annuler</button><button class="btn btn-primary" onclick="sauvegarderVente()">Sauvegarder</button></div>
   </div>
 </div>
 
 <div class="modal-overlay" id="modal-produit">
   <div class="modal">
     <div class="modal-title">➕ Nouveau matériel</div>
-    <div class="fg"><label>NOM DU MATÉRIEL *</label><input type="text" id="sp-nom" placeholder="Ex: Tournevis..."></div>
-    <div class="form-row">
-      <div class="fg"><label>CATÉGORIE *</label><select id="sp-cat"></select></div>
-      <div class="fg"><label>UNITÉ</label><select id="sp-unite"><option value="pièce">Pièce</option><option value="mètre">Mètre</option><option value="kg">Kg</option><option value="sac">Sac</option></select></div>
+    <div class="fg"><label>NOM DU MATÉRIEL</label><input type="text" id="sp-nom"></div>
+    <div class="fg"><label>CATÉGORIE</label><input type="text" id="sp-cat"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fg"><label>PRIX ACHAT</label><input type="number" id="sp-achat"></div>
+        <div class="fg"><label>PRIX VENTE</label><input type="number" id="sp-vente"></div>
     </div>
-    <div class="form-row">
-      <div class="fg"><label>STOCK INITIAL</label><input type="number" id="sp-stock" value="0"></div>
-      <div class="fg"><label>SEUIL ALERTE</label><input type="number" id="sp-seuil" value="5"></div>
+    <div class="fg"><label>STOCK INITIAL</label><input type="number" id="sp-stock" value="0"></div>
+    <div class="modal-actions" style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-produit')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterProduit()">✓ Ajouter</button>
     </div>
-    <div class="form-row">
-      <div class="fg"><label>PRIX ACHAT</label><input type="number" id="sp-achat" value="0"></div>
-      <div class="fg"><label>PRIX VENTE</label><input type="number" id="sp-vente" value="0"></div>
-    </div>
-    <div class="modal-actions"><button class="btn btn-ghost" onclick="fermerModal('modal-produit')">Annuler</button><button class="btn btn-primary" onclick="ajouterProduit()">Ajouter</button></div>
   </div>
 </div>
 
@@ -368,211 +233,107 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 <script>
 const SUPA_URL = 'https://nnuchpgpvysrrgufrqrr.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5udWNocGdwdnlzcnJndWZycXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzgyMjEsImV4cCI6MjA4OTc1NDIyMX0.tY-k7KjmOzrHubmp81rd06PBFJSiaO_dQ6_cfFVNY3Y';
-const PASS = 'Quinca123';
-const NOM = 'Abdou Faye';
-const SESSION = 'qg_session';
-
 const H = {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
-async function sbGet(t,q=''){const r=await fetch(`${SUPA_URL}/rest/v1/${t}?${q}`,{headers:H});return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SUPA_URL}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});return r.json();}
-async function sbPatch(t,id,d){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:H,body:JSON.stringify(d)});}
-async function sbDelete(t,id){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});}
 
-let S={produits:[],ventes:[],categories:[]};
-let currentPage='dashboard';
-
-function setSyncStatus(s,msg=''){
-  document.getElementById('sync-dot').className='sync-dot '+s;
-  const t={'ok':'✅ Sauvegardé','loading':'🔄 Sync...','err':'❌ Erreur'};
-  document.getElementById('sync-text').textContent=msg||t[s];
-}
+let S={produits:[],ventes:[]};
 
 async function charger(){
-  setSyncStatus('loading');
-  try{
-    const[p,v,c]=await Promise.all([sbGet('produits','order=nom'),sbGet('ventes','order=created_at.desc&limit=100'),sbGet('categories')]);
-    S.produits=p||[]; S.ventes=v||[];
-    S.categories=(c&&c[0])?c[0].liste:['Outillage','Plomberie','Électricité','Peinture','Visserie','Serrurerie','Autre'];
-    document.getElementById('filtre-cat').innerHTML='<option value="">Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
-    setSyncStatus('ok');
-  }catch(e){setSyncStatus('err');}
+  const[p,v]=await Promise.all([
+    fetch(`${SUPA_URL}/rest/v1/produits?order=nom`,{headers:H}).then(r=>r.json()),
+    fetch(`${SUPA_URL}/rest/v1/ventes?order=created_at.desc`,{headers:H}).then(r=>r.json())
+  ]);
+  S.produits=p; S.ventes=v;
+  document.getElementById('sync-dot').className='sync-dot ok';
+  document.getElementById('sync-text').textContent='Connecté';
 }
 
 function seConnecter(){
-  if(document.getElementById('login-mdp').value===PASS){
-    sessionStorage.setItem(SESSION,'1');
+  if(document.getElementById('login-mdp').value==='Quinca123'){
     document.getElementById('login-screen').classList.add('hidden');
     init();
-  }else{document.getElementById('login-err').textContent='❌ Erreur';}
-}
-function seDeconnecter(){sessionStorage.removeItem(SESSION);location.reload();}
-
-function goTo(page,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+page).classList.add('active');
-  if(btn)btn.classList.add('active');
-  currentPage=page; renderPage(page);
+  } else { document.getElementById('login-err').textContent='Erreur'; }
 }
 
-function renderPage(p){
-  if(p==='dashboard')renderDashboard();
-  else if(p==='ventes')renderVentes();
-  else if(p==='stock')renderStock();
-  else if(p==='alertes')renderAlertes();
+function goTo(p,btn){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(p==='dashboard') renderDash();
+  if(p==='ventes') renderVentes();
+  if(p==='stock') renderStock();
 }
 
-function renderDashboard(){
-  const today=new Date().toLocaleDateString('fr-FR');
-  const mesV=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
-  const ca=mesV.reduce((s,v)=>s+v.total,0);
-  const bn=mesV.reduce((s,v)=>s+v.benef,0);
-  document.getElementById('kpi-vj').textContent=fmt(ca);
-  document.getElementById('kpi-nb-vj').textContent=mesV.length+' ventes';
-  document.getElementById('kpi-bn').textContent=fmt(bn);
-  document.getElementById('kpi-rupt').textContent=S.produits.filter(p=>p.stock===0).length;
-  document.getElementById('kpi-dispo').textContent=S.produits.filter(p=>p.stock>0).length;
+function renderDash(){
+    const ca = S.ventes.reduce((acc, v) => acc + v.total, 0);
+    document.getElementById('kpi-vj').textContent = ca.toLocaleString() + ' F';
+    document.getElementById('kpi-rupt').textContent = S.produits.filter(p=>p.stock<=0).length;
+    document.getElementById('kpi-dispo').textContent = S.produits.length;
 }
 
-function renderVentes(filtre=''){
-  const rows=S.ventes.filter(v=>v.employe===NOM&&(!filtre||v.nom.toLowerCase().includes(filtre.toLowerCase())));
-  document.getElementById('ventes-table').innerHTML=rows.map(v=>`<tr>
-    <td>${v.date}</td><td><strong>${v.nom}</strong></td><td>${v.qty}</td><td>${fmt(v.total)}</td><td style="color:var(--accent)">+${fmt(v.benef)}</td><td>${v.client||'—'}</td>
-    <td>
-        <button class="btn btn-ghost" style="padding:4px 8px" onclick="ouvrirEditVente('${v.id}')">✏️</button>
-        <button class="btn" style="padding:4px 8px; background:rgba(232,80,32,0.1); color:var(--red)" onclick="supprimerVenteDirecte('${v.id}')">🗑️</button>
-    </td>
-  </tr>`).join('');
+function renderVentes(){
+    document.getElementById('ventes-table').innerHTML = S.ventes.map(v => `
+        <tr>
+            <td>${v.date}</td>
+            <td>${v.nom}</td>
+            <td>${v.qty}</td>
+            <td><strong>${v.total.toLocaleString()} F</strong></td>
+            <td>
+                <button class="btn btn-ghost" onclick="ouvrirEditVente('${v.id}')">✏️</button>
+                <button class="btn" style="color:red" onclick="supprimerVente('${v.id}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-function renderStock(filtre=''){
-  const cat=document.getElementById('filtre-cat').value;
-  let prods=S.produits;
-  if(filtre)prods=prods.filter(p=>p.nom.toLowerCase().includes(filtre.toLowerCase()));
-  if(cat)prods=prods.filter(p=>p.cat===cat);
-  document.getElementById('stock-table').innerHTML=prods.map(p=>`<tr>
-    <td><strong>${p.nom}</strong></td><td>${p.cat}</td>
-    <td><span class="stock-badge ${p.stock<=p.seuil?'sb-warn':'sb-ok'}">${p.stock} ${p.unite}</span></td>
-    <td>${fmt(p.vente)}</td><td><span class="bdg ${p.stock<=p.seuil?'bdg-a':'bdg-g'}">${p.stock<=p.seuil?'FAIBLE':'OK'}</span></td>
-    <td>
-        <button class="btn btn-ghost" style="padding:4px 8px" onclick="ouvrirEditProduit('${p.id}')">✏️ Modifier</button>
-        <button class="btn btn-blue" style="padding:4px 8px" onclick="ouvrirRecPour('${p.id}')">📥 Rec.</button>
-    </td>
-  </tr>`).join('');
+function renderStock(){
+    document.getElementById('stock-table').innerHTML = S.produits.map(p => `
+        <tr>
+            <td>${p.nom}</td>
+            <td>${p.cat}</td>
+            <td><span class="bdg ${p.stock<=0?'bdg-r':'bdg-g'}">${p.stock}</span></td>
+            <td>${p.prix_vente.toLocaleString()} F</td>
+            <td><button class="btn btn-ghost" onclick="ouvrirEditStock('${p.id}')">✏️</button></td>
+        </tr>
+    `).join('');
 }
 
-function renderAlertes(){
-  const al=S.produits.filter(p=>p.stock<=p.seuil);
-  document.getElementById('al-table').innerHTML=al.map(p=>`<tr>
-    <td><strong>${p.nom}</strong></td><td>${p.stock}</td><td>${p.seuil}</td><td style="color:var(--orange)">${p.seuil*2}</td>
-    <td><button class="btn btn-blue" onclick="ouvrirRecPour('${p.id}')">Réceptionner</button></td>
-  </tr>`).join('');
-}
-
-// --- LOGIQUE MODIFICATION PRODUIT ---
-function ouvrirEditProduit(id){
-    const p = S.produits.find(x=>x.id===id); if(!p) return;
-    document.getElementById('ep-id').value = p.id;
-    document.getElementById('ep-nom').value = p.nom;
-    document.getElementById('ep-achat').value = p.achat;
-    document.getElementById('ep-vente').value = p.vente;
-    document.getElementById('ep-stock').value = p.stock;
-    document.getElementById('ep-seuil').value = p.seuil;
-    ouvrirModal('modal-edit-produit');
-}
-
-async function sauvegarderProduit(){
-    const id = document.getElementById('ep-id').value;
-    const data = {
-        nom: document.getElementById('ep-nom').value,
-        achat: parseInt(document.getElementById('ep-achat').value),
-        vente: parseInt(document.getElementById('ep-vente').value),
-        stock: parseInt(document.getElementById('ep-stock').value),
-        seuil: parseInt(document.getElementById('ep-seuil').value)
+async function ajouterProduit(){
+    const d = {
+        nom: document.getElementById('sp-nom').value,
+        cat: document.getElementById('sp-cat').value,
+        prix_achat: parseInt(document.getElementById('sp-achat').value),
+        prix_vente: parseInt(document.getElementById('sp-vente').value),
+        stock: parseInt(document.getElementById('sp-stock').value)
     };
-    setSyncStatus('loading');
-    await sbPatch('produits', id, data);
-    fermerModal('modal-edit-produit'); toast('✅ Produit mis à jour');
-    await charger(); renderStock();
+    await fetch(`${SUPA_URL}/rest/v1/produits`,{method:'POST',headers:H,body:JSON.stringify(d)});
+    fermerModal('modal-produit'); charger().then(renderStock);
 }
 
-async function supprimerProduit(){
-    const id = document.getElementById('ep-id').value;
-    if(!confirm('Supprimer définitivement cet article du stock ?')) return;
-    setSyncStatus('loading');
-    await sbDelete('produits', id);
-    fermerModal('modal-edit-produit'); toast('🗑️ Article supprimé');
-    await charger(); renderStock();
-}
-
-// --- LOGIQUE VENTES ---
-function ouvrirVente(){
-  document.getElementById('sv-produit').innerHTML='<option value="">Choisir...</option>'+S.produits.filter(p=>p.stock>0).map(p=>`<option value="${p.id}">${p.nom}</option>`).join('');
-  ouvrirModal('modal-vente');
-}
-function onSelectProduit(){
-  const p=S.produits.find(x=>x.id===document.getElementById('sv-produit').value);
-  if(!p) return;
-  document.getElementById('sv-info').style.display='block';
-  document.getElementById('sv-dispo').textContent=p.stock+' '+p.unite;
-  document.getElementById('sv-prix-ref').textContent=fmt(p.vente);
-  document.getElementById('sv-prix').value=p.vente; calcVente();
-}
-function calcVente(){
-  const q=parseInt(document.getElementById('sv-qty').value)||0;
-  const p=parseInt(document.getElementById('sv-prix').value)||0;
-  if(q>0){
-    document.getElementById('sv-total-box').style.display='block';
-    document.getElementById('sv-total').textContent=fmt(q*p);
-  }
-}
-async function validerVente(){
-  const pid=document.getElementById('sv-produit').value;
-  const qty=parseInt(document.getElementById('sv-qty').value);
-  const pv=parseInt(document.getElementById('sv-prix').value);
-  const p=S.produits.find(x=>x.id===pid);
-  if(p.stock<qty){toast('Stock insuffisant'); return;}
-  await sbPatch('produits',pid,{stock:p.stock-qty});
-  await sbPost('ventes',{produit_id:pid,nom:p.nom,qty,pv,pa:p.achat,total:pv*qty,benef:(pv-p.achat)*qty,date:new Date().toLocaleDateString('fr-FR'),employe:NOM,client:document.getElementById('sv-client').value});
-  fermerModal('modal-vente'); toast('Vente réussie'); await charger(); renderPage(currentPage);
-}
-
-// --- AUTRES ---
-function ouvrirModal(id){document.getElementById(id).classList.add('open');}
-function fermerModal(id){document.getElementById(id).classList.remove('open');}
-function fmt(n){return new Intl.NumberFormat('fr-FR').format(n)+' F';}
-function toast(m){const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);}
-
-async function supprimerVenteDirecte(id){
-    if(!confirm('Annuler cette vente ?')) return;
-    await sbDelete('ventes', id);
-    toast('Vente annulée'); await charger(); renderVentes();
-}
-
-async function ouvrirEditVente(id){
+function ouvrirEditVente(id){
     const v = S.ventes.find(x=>x.id===id);
-    document.getElementById('ev-id').value = v.id;
-    document.getElementById('ev-qty').value = v.qty;
-    document.getElementById('ev-prix').value = v.pv;
-    document.getElementById('ev-client').value = v.client;
-    ouvrirModal('modal-edit-vente');
+    document.getElementById('ev-id').value=id;
+    document.getElementById('ev-qty').value=v.qty;
+    document.getElementById('ev-prix').value=v.pv || v.prix_vente || 0;
+    document.getElementById('modal-edit-vente').classList.add('open');
 }
 
 async function sauvegarderVente(){
     const id = document.getElementById('ev-id').value;
-    const v = S.ventes.find(x=>x.id===id);
-    const q = parseInt(document.getElementById('ev-qty').value);
-    const p = parseInt(document.getElementById('ev-prix').value);
-    await sbPatch('ventes', id, {qty:q, pv:p, total:q*p, benef:(p-v.pa)*q, client:document.getElementById('ev-client').value});
-    fermerModal('modal-edit-vente'); await charger(); renderVentes();
+    const qty = parseInt(document.getElementById('ev-qty').value);
+    const pv = parseInt(document.getElementById('ev-prix').value);
+    await fetch(`${SUPA_URL}/rest/v1/ventes?id=eq.${id}`,{method:'PATCH',headers:H,body:JSON.stringify({qty, total:qty*pv})});
+    fermerModal('modal-edit-vente'); charger().then(renderVentes);
 }
 
-function filtrerStock(v){renderStock(v);}
-function filtrerVentes(v){renderVentes(v);}
-function ouvrirRecPour(id){ ouvrirModal('modal-reception'); document.getElementById('sr-produit').innerHTML = S.produits.map(p=>`<option value="${p.id}" ${p.id===id?'selected':''}>${p.nom}</option>`).join(''); }
+async function supprimerVente(id){
+    if(!confirm('Supprimer ?')) return;
+    await fetch(`${SUPA_URL}/rest/v1/ventes?id=eq.${id}`,{method:'DELETE',headers:H});
+    charger().then(renderVentes);
+}
 
-async function init(){await charger();renderPage('dashboard');}
-if(sessionStorage.getItem(SESSION)==='1'){document.getElementById('login-screen').classList.add('hidden');init();}
+function fermerModal(id){document.getElementById(id).classList.remove('open');}
+function ouvrirModal(id){document.getElementById(id).classList.add('open');}
+
+async function init(){ await charger(); renderDash(); }
 </script>
 </body>
 </html>
