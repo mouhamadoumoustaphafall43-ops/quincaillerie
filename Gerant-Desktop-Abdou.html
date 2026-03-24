@@ -214,6 +214,11 @@ textarea{resize:vertical;min-height:70px;}
       <button class="nav-btn" onclick="goTo('alertes',this)"><span class="ni">🔔</span> Alertes</button>
     </div>
     <div class="nav-section">
+      <div class="nav-label">Outils</div>
+      <button class="nav-btn" onclick="goTo('inventaire',this)"><span class="ni">📋</span> Inventaire</button>
+      <button class="nav-btn" onclick="goTo('recus',this)"><span class="ni">🧾</span> Reçus clients</button>
+    </div>
+    <div class="nav-section">
       <div class="nav-label">Actions</div>
       <button class="nav-btn" onclick="ouvrirVente()"><span class="ni">➕</span> Nouvelle vente</button>
       <button class="nav-btn" onclick="ouvrirReception()"><span class="ni">📥</span> Réceptionner</button>
@@ -342,7 +347,127 @@ textarea{resize:vertical;min-height:70px;}
     </div>
   </div>
 
+  <!-- INVENTAIRE -->
+  <div class="page" id="page-inventaire">
+    <div class="page-header">
+      <div>
+        <div class="page-title">📋 Inventaire</div>
+        <div class="page-sub">ÉTAT COMPLET DU STOCK — MISE À JOUR EN TEMPS RÉEL</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="exporterInventaireCSV()">⬇️ Exporter CSV</button>
+        <button class="btn btn-primary" onclick="lancerInventaire()">🔄 Actualiser</button>
+      </div>
+    </div>
+    <!-- KPI inventaire -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-card kc-a"><span class="kpi-emoji">📦</span><div class="kpi-label">TOTAL ARTICLES</div><div class="kpi-value" id="inv-total">—</div><div class="kpi-sub" id="inv-total-sub">—</div></div>
+      <div class="kpi-card kc-b"><span class="kpi-emoji">💰</span><div class="kpi-label">VALEUR STOCK (ACHAT)</div><div class="kpi-value" id="inv-val-achat">—</div><div class="kpi-sub">coût total</div></div>
+      <div class="kpi-card kc-o"><span class="kpi-emoji">📈</span><div class="kpi-label">VALEUR STOCK (VENTE)</div><div class="kpi-value" id="inv-val-vente">—</div><div class="kpi-sub">prix de revente</div></div>
+      <div class="kpi-card kc-r"><span class="kpi-emoji">⚠️</span><div class="kpi-label">ARTICLES CRITIQUES</div><div class="kpi-value" id="inv-critiques">—</div><div class="kpi-sub">ruptures + faibles</div></div>
+    </div>
+    <!-- Filtres -->
+    <div class="card">
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div class="sw" style="flex:1;min-width:200px;margin-bottom:0"><span class="si">🔍</span><input type="text" placeholder="Rechercher un article..." oninput="filtrerInventaire(this.value)"></div>
+        <select id="inv-filtre-cat" onchange="filtrerInventaire()" style="width:180px">
+          <option value="">Toutes catégories</option>
+        </select>
+        <select id="inv-filtre-statut" onchange="filtrerInventaire()" style="width:160px">
+          <option value="">Tous statuts</option>
+          <option value="ok">✅ OK</option>
+          <option value="faible">⚠️ Faible</option>
+          <option value="rupture">❌ Rupture</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Réf.</th><th>Article</th><th>Catégorie</th><th>Unité</th><th>Stock actuel</th><th>Seuil min.</th><th>P. Achat</th><th>P. Vente</th><th>Valeur stock</th><th>Statut</th></tr></thead>
+        <tbody id="inventaire-table"></tbody>
+        <tfoot>
+          <tr style="border-top:2px solid var(--border)">
+            <td colspan="4" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);padding:10px 12px">TOTAUX</td>
+            <td id="inv-total-qty" style="font-weight:700;color:var(--text);font-family:'DM Mono',monospace">—</td>
+            <td></td>
+            <td id="inv-foot-achat" style="font-family:'DM Mono',monospace;color:var(--blue)">—</td>
+            <td id="inv-foot-vente" style="font-family:'DM Mono',monospace;color:var(--accent)">—</td>
+            <td id="inv-foot-val" style="font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)">—</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <!-- Par catégorie -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">📊 Répartition par catégorie</div>
+        <div id="inv-par-cat"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📉 Articles à restock urgent</div>
+        <div id="inv-urgent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REÇUS CLIENTS -->
+  <div class="page" id="page-recus">
+    <div class="page-header">
+      <div>
+        <div class="page-title">🧾 Reçus clients</div>
+        <div class="page-sub">GÉNÉRATION & IMPRESSION DES REÇUS · GÉRANT SEULEMENT</div>
+      </div>
+      <button class="btn btn-primary" onclick="ouvrirNouveauRecu()">➕ Nouveau reçu</button>
+    </div>
+    <div class="grid-2">
+      <!-- Liste des reçus -->
+      <div class="card">
+        <div class="card-title">🧾 Reçus récents <span id="badge-recus" class="bdg bdg-b">0</span></div>
+        <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher client..." oninput="filtrerRecus(this.value)"></div>
+        <div id="recus-list"><div class="empty"><span class="ei">🧾</span>Aucun reçu généré</div></div>
+      </div>
+      <!-- Aperçu imprimable -->
+      <div class="card">
+        <div class="card-title">🖨️ Aperçu imprimable
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" style="padding:5px 12px;font-size:11px" onclick="imprimerRecu()">🖨️ Imprimer</button>
+            <button class="btn btn-blue" style="padding:5px 12px;font-size:11px" onclick="configurerImprimante()">⚙️ Config.</button>
+          </div>
+        </div>
+        <!-- Config imprimante -->
+        <div id="printer-config" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:10px;letter-spacing:1px">⚙️ CONFIGURATION IMPRIMANTE</div>
+          <div class="form-row">
+            <div class="fg"><label>TYPE D'IMPRIMANTE</label>
+              <select id="printer-type">
+                <option value="thermal58">Thermique 58mm</option>
+                <option value="thermal80">Thermique 80mm</option>
+                <option value="a4">Imprimante A4</option>
+              </select>
+            </div>
+            <div class="fg"><label>NOM BOUTIQUE</label><input type="text" id="printer-boutique" value="Quincaillerie Khadija" placeholder="Nom de la boutique"></div>
+          </div>
+          <div class="form-row">
+            <div class="fg"><label>ADRESSE</label><input type="text" id="printer-adresse" placeholder="Adresse..."></div>
+            <div class="fg"><label>TÉLÉPHONE</label><input type="text" id="printer-tel" placeholder="+221..."></div>
+          </div>
+          <div class="fg"><label>MESSAGE DE PIE DE REÇU</label><input type="text" id="printer-footer" value="Merci de votre visite !" placeholder="Message..."></div>
+          <button class="btn btn-primary" style="width:100%" onclick="sauvegarderConfigImprimante()">✓ Sauvegarder la config</button>
+        </div>
+        <!-- Aperçu reçu -->
+        <div id="recu-apercu" style="background:#fff;border-radius:8px;padding:0;min-height:200px;display:flex;align-items:center;justify-content:center">
+          <div style="color:#999;text-align:center;font-size:13px;padding:40px">
+            <div style="font-size:36px;margin-bottom:10px;opacity:.3">🧾</div>
+            Crée ou sélectionne un reçu
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </main>
+
+<!-- ZONE D'IMPRESSION (hors écran) -->
+<div id="print-zone" style="display:none"></div>
 
 <!-- MODAL VENTE -->
 <div class="modal-overlay" id="modal-vente">
@@ -494,6 +619,73 @@ textarea{resize:vertical;min-height:70px;}
   </div>
 </div>
 
+<!-- MODAL NOUVEAU REÇU -->
+<div class="modal-overlay" id="modal-recu">
+  <div class="modal" style="width:600px">
+    <div class="modal-title">🧾 Créer un reçu client</div>
+    <div class="form-row">
+      <div class="fg"><label>NOM DU CLIENT</label><input type="text" id="rc-client" placeholder="Client..."></div>
+      <div class="fg"><label>DATE</label><input type="text" id="rc-date" placeholder="jj/mm/aaaa"></div>
+    </div>
+    <div class="fg"><label>N° REÇU</label><input type="text" id="rc-num" placeholder="Auto-généré..." readonly style="opacity:.6"></div>
+    <!-- Articles du reçu -->
+    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:8px">ARTICLES</div>
+    <div id="rc-articles"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="ajouterLigneRecu()">➕ Ajouter un article</button>
+    <!-- Totaux -->
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:14px">
+      <div class="ib-row"><span class="ib-lbl">Sous-total</span><span class="ib-val" id="rc-sous-total">0 F</span></div>
+      <div class="ib-row">
+        <span class="ib-lbl">Remise (%)</span>
+        <input type="number" id="rc-remise" value="0" min="0" max="100" oninput="calcRecu()" style="width:80px;padding:4px 8px;font-size:12px;text-align:right">
+      </div>
+      <div class="ib-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px">
+        <span style="font-weight:700;color:var(--text);font-family:'DM Mono',monospace">TOTAL</span>
+        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)" id="rc-total">0 F</span>
+      </div>
+    </div>
+    <div class="fg"><label>MODE DE PAIEMENT</label>
+      <select id="rc-paiement">
+        <option value="Espèces">💵 Espèces</option>
+        <option value="Mobile Money">📱 Mobile Money</option>
+        <option value="Virement">🏦 Virement</option>
+        <option value="Crédit">📋 Crédit</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-recu')">Annuler</button>
+      <button class="btn btn-blue" onclick="genererRecu()">🧾 Générer & Aperçu</button>
+      <button class="btn btn-primary" onclick="genererEtImprimerRecu()">🖨️ Générer & Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT CSS -->
+<style>
+@media print {
+  body > *:not(#print-zone) { display: none !important; }
+  #print-zone { display: block !important; }
+  .recu-print { font-family: 'Courier New', monospace; font-size: 12px; color: #000; background: #fff; padding: 10px; max-width: 300px; margin: 0 auto; }
+  .recu-print .rp-title { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 4px; }
+  .recu-print .rp-sub { font-size: 10px; text-align: center; margin-bottom: 8px; color: #555; }
+  .recu-print .rp-sep { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  .recu-print .rp-row { display: flex; justify-content: space-between; margin: 2px 0; font-size: 11px; }
+  .recu-print .rp-total { font-size: 14px; font-weight: bold; border-top: 2px solid #000; padding-top: 4px; margin-top: 4px; }
+  .recu-print .rp-footer { text-align: center; font-size: 10px; margin-top: 10px; color: #555; }
+}
+/* Style aperçu reçu dans l'interface */
+.recu-print { font-family: 'Courier New', monospace; font-size: 12px; color: #000; background: #fff; padding: 16px; max-width: 320px; margin: 0 auto; border-radius: 4px; }
+.recu-print .rp-title { font-size: 15px; font-weight: bold; text-align: center; margin-bottom: 4px; }
+.recu-print .rp-sub { font-size: 10px; text-align: center; margin-bottom: 6px; color: #666; }
+.recu-print .rp-sep { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+.recu-print .rp-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 11px; }
+.recu-print .rp-total-row { font-size: 13px; font-weight: bold; border-top: 2px solid #000; padding-top: 4px; margin-top: 4px; display: flex; justify-content: space-between; }
+.recu-print .rp-footer { text-align: center; font-size: 10px; margin-top: 10px; color: #666; }
+/* Ligne article reçu */
+.rc-ligne { display:grid; grid-template-columns:1fr 70px 90px 30px; gap:8px; align-items:center; margin-bottom:8px; }
+.rc-ligne input, .rc-ligne select { padding:7px 10px; font-size:12px; }
+</style>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -510,7 +702,6 @@ const H = {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type'
 async function sbGet(t,q=''){const r=await fetch(`${SUPA_URL}/rest/v1/${t}?${q}`,{headers:H});return r.json();}
 async function sbPost(t,d){const r=await fetch(`${SUPA_URL}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});return r.json();}
 async function sbPatch(t,id,d){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:H,body:JSON.stringify(d)});}
-async function sbDelete(t,id){const r=await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});if(!r.ok)throw new Error('Erreur suppression');}
 
 let S={produits:[],ventes:[],categories:[]};
 let currentPage='dashboard';
@@ -566,6 +757,8 @@ function renderPage(p){
   else if(p==='ventes')renderVentes();
   else if(p==='stock')renderStock();
   else if(p==='alertes')renderAlertes();
+  else if(p==='inventaire')renderInventaire();
+  else if(p==='recus')renderRecus();
 }
 
 // ══ DASHBOARD ══
@@ -890,6 +1083,260 @@ async function supprimerProduit(id){
     toast('🗑️ Matériel supprimé');
     await charger();renderStock();updateNotif();
   }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
+}
+
+// ══ INVENTAIRE ══
+function renderInventaire(filtre=''){
+  const cat=document.getElementById('inv-filtre-cat')?.value||'';
+  const statut=document.getElementById('inv-filtre-statut')?.value||'';
+  // Sync catégories dans le filtre
+  const sel=document.getElementById('inv-filtre-cat');
+  if(sel)sel.innerHTML='<option value="">Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+  let prods=[...S.produits];
+  if(filtre)prods=prods.filter(p=>p.nom.toLowerCase().includes(filtre.toLowerCase()));
+  if(cat)prods=prods.filter(p=>p.cat===cat);
+  if(statut==='rupture')prods=prods.filter(p=>p.stock===0);
+  else if(statut==='faible')prods=prods.filter(p=>p.stock>0&&p.stock<=p.seuil);
+  else if(statut==='ok')prods=prods.filter(p=>p.stock>p.seuil);
+  prods.sort((a,b)=>a.stock-b.stock);
+
+  // KPI
+  const totalQty=S.produits.reduce((s,p)=>s+p.stock,0);
+  const valAchat=S.produits.reduce((s,p)=>s+p.stock*p.achat,0);
+  const valVente=S.produits.reduce((s,p)=>s+p.stock*p.vente,0);
+  const critiques=S.produits.filter(p=>p.stock<=p.seuil).length;
+  document.getElementById('inv-total').textContent=S.produits.length;
+  document.getElementById('inv-total-sub').textContent=totalQty+' unités au total';
+  document.getElementById('inv-val-achat').textContent=fmtK(valAchat);
+  document.getElementById('inv-val-vente').textContent=fmtK(valVente);
+  document.getElementById('inv-critiques').textContent=critiques;
+
+  // Tableau
+  let totQty=0,totAchat=0,totVente=0,totVal=0;
+  document.getElementById('inventaire-table').innerHTML=prods.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">Aucun article</td></tr>`:prods.map((p,i)=>{
+    const cls=p.stock===0?'sb-bad':p.stock<=p.seuil?'sb-warn':'sb-ok';
+    const lbl=p.stock===0?'RUPTURE':p.stock<=p.seuil?`⚠ FAIBLE`:'OK';
+    const valStock=p.stock*p.achat;
+    totQty+=p.stock;totAchat+=p.achat;totVente+=p.vente;totVal+=valStock;
+    return`<tr>
+      <td style="font-family:'DM Mono',monospace;color:var(--text3);font-size:11px">#${String(i+1).padStart(3,'0')}</td>
+      <td><strong>${p.nom}</strong>${p.description?`<div style="font-size:10px;color:var(--text3)">${p.description}</div>`:''}</td>
+      <td><span class="bdg bdg-b">${p.cat}</span></td>
+      <td style="color:var(--text3)">${p.unite||'pièce'}</td>
+      <td><strong style="font-family:'DM Mono',monospace;color:${p.stock===0?'var(--red)':p.stock<=p.seuil?'var(--orange)':'var(--text)'}">${p.stock}</strong></td>
+      <td style="color:var(--text3);font-family:'DM Mono',monospace">${p.seuil}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--text2)">${fmt(p.achat)}</td>
+      <td style="font-family:'DM Mono',monospace">${fmt(p.vente)}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700">${fmt(valStock)}</td>
+      <td><span class="bdg ${p.stock===0?'bdg-r':p.stock<=p.seuil?'bdg-a':'bdg-g'}">${lbl}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('inv-total-qty').textContent=totQty+' unités';
+  document.getElementById('inv-foot-achat').textContent=fmt(totAchat);
+  document.getElementById('inv-foot-vente').textContent=fmt(totVente);
+  document.getElementById('inv-foot-val').textContent=fmt(prods.reduce((s,p)=>s+p.stock*p.achat,0));
+
+  // Par catégorie
+  const catM={};S.produits.forEach(p=>{if(!catM[p.cat])catM[p.cat]={qty:0,val:0,nb:0};catM[p.cat].qty+=p.stock;catM[p.cat].val+=p.stock*p.achat;catM[p.cat].nb++;});
+  const cats=Object.entries(catM).sort((a,b)=>b[1].val-a[1].val);
+  const mxV=cats[0]?.[1].val||1;
+  document.getElementById('inv-par-cat').innerHTML=cats.length===0?'<div class="empty">Aucune donnée</div>':cats.map(([c,d])=>`<div class="pw"><div class="ph"><span class="pl">📦 ${c}</span><span class="pv">${fmtK(d.val)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(d.val/mxV*100)}%;background:var(--blue)"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">${d.nb} articles · ${d.qty} unités</div></div>`).join('');
+
+  // Urgent
+  const urg=S.produits.filter(p=>p.stock<=p.seuil).sort((a,b)=>a.stock-b.stock).slice(0,8);
+  document.getElementById('inv-urgent').innerHTML=urg.length===0?'<div class="empty"><span class="ei">✅</span>Aucun article critique</div>':urg.map(p=>`<div class="alert-item"><div class="alert-dot ${p.stock===0?'ad-r':'ad-a'}"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">Stock: ${p.stock} ${p.unite||''} · Seuil: ${p.seuil}</div></div><span class="bdg ${p.stock===0?'bdg-r':'bdg-a'}">${p.stock===0?'RUPTURE':p.stock+' rest.'}</span></div>`).join('');
+}
+function filtrerInventaire(v){renderInventaire(typeof v==='string'?v:document.getElementById('inv-filtre-cat')?.value||'');}
+function lancerInventaire(){charger().then(()=>renderInventaire());toast('🔄 Inventaire actualisé');}
+function exporterInventaireCSV(){
+  const header='Ref,Article,Categorie,Unite,Stock,Seuil,Prix Achat,Prix Vente,Valeur Stock,Statut\n';
+  const rows=S.produits.map((p,i)=>{
+    const st=p.stock===0?'RUPTURE':p.stock<=p.seuil?'FAIBLE':'OK';
+    return`#${String(i+1).padStart(3,'0')},"${p.nom}","${p.cat}","${p.unite||'pièce'}",${p.stock},${p.seuil},${p.achat},${p.vente},${p.stock*p.achat},"${st}"`;
+  }).join('\n');
+  const blob=new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`inventaire_${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.csv`;a.click();
+  toast('✅ Inventaire exporté en CSV');
+}
+
+// ══ REÇUS ══
+let RECUS=[];let RECU_LINES=1;
+let PRINTER_CONFIG={boutique:'Quincaillerie Khadija',adresse:'',tel:'',footer:'Merci de votre visite !',type:'thermal80'};
+
+function chargerConfigImprimante(){
+  try{const c=JSON.parse(localStorage.getItem('printer_config')||'{}');Object.assign(PRINTER_CONFIG,c);}catch(e){}
+  document.getElementById('printer-boutique').value=PRINTER_CONFIG.boutique;
+  document.getElementById('printer-adresse').value=PRINTER_CONFIG.adresse;
+  document.getElementById('printer-tel').value=PRINTER_CONFIG.tel;
+  document.getElementById('printer-footer').value=PRINTER_CONFIG.footer;
+  document.getElementById('printer-type').value=PRINTER_CONFIG.type;
+}
+function sauvegarderConfigImprimante(){
+  PRINTER_CONFIG.boutique=document.getElementById('printer-boutique').value;
+  PRINTER_CONFIG.adresse=document.getElementById('printer-adresse').value;
+  PRINTER_CONFIG.tel=document.getElementById('printer-tel').value;
+  PRINTER_CONFIG.footer=document.getElementById('printer-footer').value;
+  PRINTER_CONFIG.type=document.getElementById('printer-type').value;
+  localStorage.setItem('printer_config',JSON.stringify(PRINTER_CONFIG));
+  document.getElementById('printer-config').style.display='none';
+  toast('✅ Configuration imprimante sauvegardée');
+}
+function configurerImprimante(){
+  const el=document.getElementById('printer-config');
+  el.style.display=el.style.display==='none'?'block':'none';
+  chargerConfigImprimante();
+}
+function renderRecus(filtre=''){
+  chargerConfigImprimante();
+  try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+  document.getElementById('badge-recus').textContent=RECUS.length;
+  const liste=filtre?RECUS.filter(r=>r.client.toLowerCase().includes(filtre.toLowerCase())):RECUS;
+  document.getElementById('recus-list').innerHTML=liste.length===0?`<div class="empty"><span class="ei">🧾</span>Aucun reçu généré</div>`:liste.slice().reverse().map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${r.client||'Client'} <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${r.num}</span></div>
+      <div style="font-size:11px;color:var(--text3)">${r.date} · ${r.paiement} · ${r.articles.length} article(s)</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">${fmt(r.total)}</span>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="afficherRecu('${r.num}')">👁</button>
+      <button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="imprimerRecuId('${r.num}')">🖨️</button>
+      <button class="btn" style="padding:4px 8px;font-size:11px;background:rgba(232,80,32,.1);color:var(--red);border:1px solid rgba(232,80,32,.2)" onclick="supprimerRecu('${r.num}')">🗑</button>
+    </div>
+  </div>`).join('');
+}
+function filtrerRecus(v){renderRecus(v);}
+function ouvrirNouveauRecu(){
+  RECU_LINES=0;
+  document.getElementById('rc-articles').innerHTML='';
+  const num='REC-'+Date.now().toString(36).toUpperCase();
+  document.getElementById('rc-num').value=num;
+  document.getElementById('rc-date').value=new Date().toLocaleDateString('fr-FR');
+  document.getElementById('rc-client').value='';
+  document.getElementById('rc-remise').value=0;
+  document.getElementById('rc-sous-total').textContent='0 F';
+  document.getElementById('rc-total').textContent='0 F';
+  ajouterLigneRecu();ajouterLigneRecu();
+  fermerModal('modal-recu');
+  document.getElementById('modal-recu').classList.add('open');
+}
+function ajouterLigneRecu(){
+  RECU_LINES++;
+  const id='rl'+RECU_LINES;
+  const div=document.createElement('div');
+  div.className='rc-ligne';div.id=id;
+  const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}">${p.nom}</option>`).join('');
+  div.innerHTML=`<select onchange="onRecuProduit('${id}')">${opts}</select><input type="number" id="${id}-qty" value="1" min="1" oninput="calcRecu()" placeholder="Qté"><input type="number" id="${id}-prix" placeholder="Prix unit." oninput="calcRecu()"><button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
+  document.getElementById('rc-articles').appendChild(div);
+}
+function supprimerLigneRecu(id){const el=document.getElementById(id);if(el)el.remove();calcRecu();}
+function onRecuProduit(id){
+  const sel=document.querySelector('#'+id+' select');
+  const opt=sel.options[sel.selectedIndex];
+  const prix=opt.dataset.prix||0;
+  document.getElementById(id+'-prix').value=prix;
+  calcRecu();
+}
+function calcRecu(){
+  let sous=0;
+  document.querySelectorAll('.rc-ligne').forEach(ligne=>{
+    const id=ligne.id;
+    const qty=parseInt(document.getElementById(id+'-qty')?.value)||0;
+    const prix=parseInt(document.getElementById(id+'-prix')?.value)||0;
+    sous+=qty*prix;
+  });
+  const remise=parseInt(document.getElementById('rc-remise').value)||0;
+  const total=sous*(1-remise/100);
+  document.getElementById('rc-sous-total').textContent=fmt(sous);
+  document.getElementById('rc-total').textContent=fmt(total);
+}
+function collecterLignesRecu(){
+  const articles=[];
+  document.querySelectorAll('.rc-ligne').forEach(ligne=>{
+    const id=ligne.id;
+    const sel=ligne.querySelector('select');
+    const qty=parseInt(document.getElementById(id+'-qty')?.value)||0;
+    const prix=parseInt(document.getElementById(id+'-prix')?.value)||0;
+    const prodNom=sel.options[sel.selectedIndex]?.text||'';
+    if(qty>0&&prix>0&&prodNom&&prodNom!=='Choisir...')articles.push({nom:prodNom,qty,prix,total:qty*prix});
+  });
+  return articles;
+}
+function genererRecu(){
+  const articles=collecterLignesRecu();
+  if(articles.length===0){toast('⚠️ Ajoute au moins un article');return;}
+  const client=document.getElementById('rc-client').value||'Client';
+  const date=document.getElementById('rc-date').value||new Date().toLocaleDateString('fr-FR');
+  const num=document.getElementById('rc-num').value;
+  const remise=parseInt(document.getElementById('rc-remise').value)||0;
+  const paiement=document.getElementById('rc-paiement').value;
+  const sous=articles.reduce((s,a)=>s+a.total,0);
+  const total=Math.round(sous*(1-remise/100));
+  const recu={num,client,date,articles,remise,paiement,sous,total,employe:NOM,ts:new Date().toISOString()};
+  // Sauvegarder
+  try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+  RECUS=RECUS.filter(r=>r.num!==num);
+  RECUS.push(recu);
+  localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
+  fermerModal('modal-recu');
+  afficherRecu(num);
+  renderRecus();
+  toast('✅ Reçu généré — '+num);
+}
+function genererEtImprimerRecu(){
+  genererRecu();
+  setTimeout(()=>imprimerRecu(),300);
+}
+function buildRecuHTML(recu){
+  const cfg=PRINTER_CONFIG;
+  const lignes=recu.articles.map(a=>`<div class="rp-row"><span>${a.nom} x${a.qty}</span><span>${fmt(a.total)}</span></div>`).join('');
+  const remiseL=recu.remise>0?`<div class="rp-row"><span>Remise ${recu.remise}%</span><span>-${fmt(recu.sous-recu.total)}</span></div>`:'';
+  return`<div class="recu-print">
+    <div class="rp-title">🔧 ${cfg.boutique}</div>
+    ${cfg.adresse?`<div class="rp-sub">${cfg.adresse}</div>`:''}
+    ${cfg.tel?`<div class="rp-sub">📞 ${cfg.tel}</div>`:''}
+    <hr class="rp-sep">
+    <div class="rp-row"><span>N° Reçu:</span><span>${recu.num}</span></div>
+    <div class="rp-row"><span>Date:</span><span>${recu.date}</span></div>
+    <div class="rp-row"><span>Client:</span><span>${recu.client}</span></div>
+    <div class="rp-row"><span>Vendeur:</span><span>${recu.employe}</span></div>
+    <hr class="rp-sep">
+    ${lignes}
+    <hr class="rp-sep">
+    ${remiseL}
+    <div class="rp-total-row"><span>TOTAL</span><span>${fmt(recu.total)}</span></div>
+    <div class="rp-row" style="margin-top:4px"><span>Paiement:</span><span>${recu.paiement}</span></div>
+    <hr class="rp-sep">
+    <div class="rp-footer">${cfg.footer}</div>
+  </div>`;
+}
+function afficherRecu(num){
+  try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+  const recu=RECUS.find(r=>r.num===num);if(!recu)return;
+  document.getElementById('recu-apercu').innerHTML=buildRecuHTML(recu);
+}
+function imprimerRecu(){
+  const el=document.getElementById('recu-apercu');
+  if(!el.querySelector('.recu-print')){toast('⚠️ Aucun reçu à imprimer — génère ou sélectionne un reçu d\'abord');return;}
+  document.getElementById('print-zone').innerHTML=el.innerHTML;
+  window.print();
+  toast('🖨️ Impression lancée');
+}
+function imprimerRecuId(num){
+  try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+  const recu=RECUS.find(r=>r.num===num);if(!recu)return;
+  document.getElementById('print-zone').innerHTML=buildRecuHTML(recu);
+  window.print();
+  toast('🖨️ Impression lancée — '+num);
+}
+function supprimerRecu(num){
+  if(!confirm('Supprimer ce reçu ?'))return;
+  try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+  RECUS=RECUS.filter(r=>r.num!==num);
+  localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
+  const ap=document.getElementById('recu-apercu');
+  if(ap.innerHTML.includes(num))ap.innerHTML='<div style="color:#999;text-align:center;font-size:13px;padding:40px"><div style="font-size:36px;margin-bottom:10px;opacity:.3">🧾</div>Crée ou sélectionne un reçu</div>';
+  renderRecus();
+  toast('🗑️ Reçu supprimé');
 }
 
 // ══ INIT ══
