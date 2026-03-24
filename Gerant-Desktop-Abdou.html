@@ -283,7 +283,7 @@ textarea{resize:vertical;min-height:70px;}
     <div class="card">
       <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerVentes(this.value)"></div>
       <table>
-        <thead><tr><th>Date</th><th>Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th><th>Bénéfice</th><th>Client</th></tr></thead>
+        <thead><tr><th>Date</th><th>Article</th><th>Qté</th><th>Prix unit.</th><th>Total</th><th>Bénéfice</th><th>Client</th><th>Modifier</th><th>Supprimer</th></tr></thead>
         <tbody id="ventes-table"></tbody>
       </table>
     </div>
@@ -295,6 +295,10 @@ textarea{resize:vertical;min-height:70px;}
       <div>
         <div class="page-title">Stock disponible</div>
         <div class="page-sub">TOUS LES MATÉRIAUX EN STOCK</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="ouvrirModal('modal-produit')">➕ Nouveau matériel</button>
+        <button class="btn btn-blue" onclick="ouvrirReception()">📥 Réceptionner</button>
       </div>
     </div>
     <div class="card">
@@ -401,14 +405,66 @@ textarea{resize:vertical;min-height:70px;}
   </div>
 </div>
 
+
+<!-- MODAL NOUVEAU MATÉRIEL -->
+<div class="modal-overlay" id="modal-produit">
+  <div class="modal">
+    <div class="modal-title">➕ Nouveau matériel</div>
+    <div class="fg"><label>NOM DU MATÉRIEL *</label><input type="text" id="sp-nom" placeholder="Ex: Tournevis, Câble 2.5mm..."></div>
+    <div class="form-row">
+      <div class="fg"><label>CATÉGORIE *</label><select id="sp-cat"><option value="">Choisir...</option></select></div>
+      <div class="fg"><label>UNITÉ DE MESURE</label>
+        <select id="sp-unite">
+          <option value="pièce">Pièce</option><option value="mètre">Mètre</option>
+          <option value="kg">Kilogramme</option><option value="litre">Litre</option>
+          <option value="boite">Boite</option><option value="sac">Sac</option>
+          <option value="rouleau">Rouleau</option><option value="lot">Lot</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>STOCK INITIAL</label><input type="number" id="sp-stock" value="0" min="0"></div>
+      <div class="fg"><label>SEUIL D'ALERTE MIN.</label><input type="number" id="sp-seuil" value="5" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>PRIX D'ACHAT (F)</label><input type="number" id="sp-achat" value="0" min="0"></div>
+      <div class="fg"><label>PRIX DE VENTE (F)</label><input type="number" id="sp-vente" value="0" min="0"></div>
+    </div>
+    <div class="fg"><label>DESCRIPTION / RÉFÉRENCE (optionnel)</label><textarea id="sp-desc" placeholder="Marque, taille, référence..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-produit')">Annuler</button>
+      <button class="btn btn-primary" onclick="ajouterProduit()">✓ Ajouter au stock</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL MODIFIER VENTE -->
+<div class="modal-overlay" id="modal-edit-vente">
+  <div class="modal">
+    <div class="modal-title">✏️ Modifier la vente</div>
+    <input type="hidden" id="ev-id">
+    <div class="fg"><label>ARTICLE</label><input type="text" id="ev-nom" readonly style="opacity:.6"></div>
+    <div class="form-row">
+      <div class="fg"><label>QUANTITÉ</label><input type="number" id="ev-qty" min="1"></div>
+      <div class="fg"><label>PRIX UNITAIRE (F)</label><input type="number" id="ev-prix" min="0"></div>
+    </div>
+    <div class="fg"><label>CLIENT</label><input type="text" id="ev-client" placeholder="Nom du client..."></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-edit-vente')">Annuler</button>
+      <button class="btn btn-primary" onclick="sauvegarderVente()">✓ Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 // ══════════════════════════════════
 //  CONFIG SUPABASE
 // ══════════════════════════════════
-const SUPA_URL = 'https://prazzxxhjatmxftfbiks.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByYXp6eHhoamF0bXhmdGZiaWtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjc3NTIsImV4cCI6MjA4OTcwMzc1Mn0.PV5qK7ZQopzTHDfNW8IexdjOno0z26BP0Gt3t7UUUdQ';
+const SUPA_URL = 'https://nnuchpgpvysrrgufrqrr.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5udWNocGdwdnlzcnJndWZycXJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxNzgyMjEsImV4cCI6MjA4OTc1NDIyMX0.tY-k7KjmOzrHubmp81rd06PBFJSiaO_dQ6_cfFVNY3Y';
 const PASS     = 'Quinca123';
 const NOM      = 'Abdou Faye';
 const SESSION  = 'qg_session';
@@ -515,7 +571,17 @@ function renderDashboard(){
 // ══ VENTES ══
 function renderVentes(filtre=''){
   const rows=S.ventes.filter(v=>v.employe===NOM&&(!filtre||v.nom.toLowerCase().includes(filtre.toLowerCase())));
-  document.getElementById('ventes-table').innerHTML=rows.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Aucune vente</td></tr>`:rows.map(v=>{const mg=v.pv>0?Math.round((v.pv-v.pa)/v.pv*100):0;return`<tr><td>${v.date}</td><td><strong>${v.nom}</strong></td><td><span class="bdg bdg-b">${v.qty}</span></td><td>${fmt(v.pv)}</td><td><strong>${fmt(v.total)}</strong></td><td style="color:var(--accent)">+${fmt(v.benef)} <span style="font-size:10px;color:var(--text3)">(${mg}%)</span></td><td style="color:var(--text3)">${v.client||'—'}</td></tr>`;}).join('');
+  document.getElementById('ventes-table').innerHTML=rows.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">Aucune vente</td></tr>`:rows.map(v=>{const mg=v.pv>0?Math.round((v.pv-v.pa)/v.pv*100):0;return`<tr>
+    <td>${v.date}</td>
+    <td><strong>${v.nom}</strong></td>
+    <td><span class="bdg bdg-b">${v.qty}</span></td>
+    <td>${fmt(v.pv)}</td>
+    <td><strong>${fmt(v.total)}</strong></td>
+    <td style="color:var(--accent)">+${fmt(v.benef)} <span style="font-size:10px;color:var(--text3)">(${mg}%)</span></td>
+    <td style="color:var(--text3)">${v.client||'—'}</td>
+    <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="ouvrirEditVente('${v.id}')">✏️</button></td>
+    <td><button class="btn" style="padding:4px 10px;font-size:11px;background:rgba(232,80,32,.12);color:var(--red);border:1px solid rgba(232,80,32,.25)" onclick="supprimerVenteDirecte('${v.id}')">🗑️</button></td>
+  </tr>`;}).join('');
 }
 function filtrerVentes(v){renderVentes(v);}
 
@@ -635,7 +701,17 @@ async function validerReception(){
 }
 
 // ══ MODALS ══
-function ouvrirModal(id){document.getElementById(id).classList.add('open');}
+function ouvrirModal(id){
+  if(id==='modal-produit'){
+    document.getElementById('sp-nom').value='';
+    document.getElementById('sp-desc').value='';
+    document.getElementById('sp-unite').value='pièce';
+    document.getElementById('sp-cat').innerHTML='<option value="">Choisir...</option>'+S.categories.map(c=>`<option>${c}</option>`).join('');
+    ['sp-stock','sp-achat','sp-vente'].forEach(i=>document.getElementById(i).value=0);
+    document.getElementById('sp-seuil').value=5;
+  }
+  document.getElementById(id).classList.add('open');
+}
 function fermerModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
@@ -643,6 +719,67 @@ document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click
 function fmt(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n))+' F';}
 function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M F';if(n>=1000)return Math.round(n/1000)+'k F';return Math.round(n)+' F';}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
+
+
+// ══ NOUVEAU MATÉRIEL ══
+async function ajouterProduit(){
+  const nom=document.getElementById('sp-nom').value.trim();
+  const cat=document.getElementById('sp-cat').value;
+  if(!nom||!cat){toast('⚠️ Le nom et la catégorie sont obligatoires');return;}
+  setSyncStatus('loading','💾 Sauvegarde...');
+  try{
+    await sbPost('produits',{
+      nom, cat,
+      unite: document.getElementById('sp-unite').value||'pièce',
+      description: document.getElementById('sp-desc').value||'',
+      stock: parseInt(document.getElementById('sp-stock').value)||0,
+      seuil: parseInt(document.getElementById('sp-seuil').value)||5,
+      achat: parseInt(document.getElementById('sp-achat').value)||0,
+      vente: parseInt(document.getElementById('sp-vente').value)||0,
+      date_ajout: new Date().toLocaleDateString('fr-FR'),
+    });
+    fermerModal('modal-produit');
+    toast('✅ "'+nom+'" ajouté et sauvegardé sur Supabase');
+    await charger(); renderStock();
+  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
+}
+
+
+// ══ MODIFIER / SUPPRIMER VENTE ══
+function ouvrirEditVente(id){
+  const v=S.ventes.find(x=>x.id===id);if(!v)return;
+  document.getElementById('ev-id').value=id;
+  document.getElementById('ev-nom').value=v.nom;
+  document.getElementById('ev-qty').value=v.qty;
+  document.getElementById('ev-prix').value=v.pv;
+  document.getElementById('ev-client').value=v.client||'';
+  ouvrirModal('modal-edit-vente');
+}
+
+async function sauvegarderVente(){
+  const id=document.getElementById('ev-id').value;
+  const qty=parseInt(document.getElementById('ev-qty').value)||1;
+  const pv=parseInt(document.getElementById('ev-prix').value)||0;
+  const client=document.getElementById('ev-client').value;
+  const v=S.ventes.find(x=>x.id===id);if(!v)return;
+  setSyncStatus('loading','💾 Sauvegarde...');
+  try{
+    await sbPatch('ventes',id,{qty,pv,total:pv*qty,benef:(pv-v.pa)*qty,client});
+    fermerModal('modal-edit-vente');
+    toast('✅ Vente modifiée avec succès');
+    await charger();renderVentes();
+  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
+}
+
+async function supprimerVenteDirecte(id){
+  if(!confirm('Supprimer cette vente ?'))return;
+  setSyncStatus('loading');
+  try{
+    await sbDelete('ventes',id);
+    toast('🗑️ Vente supprimée');
+    await charger();renderVentes();
+  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
+}
 
 // ══ INIT ══
 async function init(){await charger();renderPage('dashboard');}
