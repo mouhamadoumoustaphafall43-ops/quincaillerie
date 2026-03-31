@@ -283,7 +283,10 @@ textarea{resize:vertical;min-height:70px;}
         <div class="page-title">Mes Ventes</div>
         <div class="page-sub">HISTORIQUE DE MES VENTES</div>
       </div>
-      <button class="btn btn-primary" onclick="ouvrirVente()">💰 Nouvelle vente</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="exporterVentesJourPDF()">📄 Export PDF du jour</button>
+        <button class="btn btn-primary" onclick="ouvrirVente()">💰 Nouvelle vente</button>
+      </div>
     </div>
     <div class="card">
       <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerVentes(this.value)"></div>
@@ -314,7 +317,7 @@ textarea{resize:vertical;min-height:70px;}
         </select>
       </div>
       <table>
-        <thead><tr><th>Réf.</th><th>Article</th><th>Catégorie</th><th>Unité</th><th>Stock</th><th>Seuil</th><th>Prix achat</th><th>Prix vente</th><th>Statut</th><th style="text-align:center">Actions</th></tr></thead>
+        <thead><tr><th>Article</th><th>Catégorie</th><th>Unité</th><th>Stock</th><th>Seuil</th><th>Prix achat</th><th>Prix vente</th><th>Statut</th><th style="text-align:center">Actions</th></tr></thead>
         <tbody id="stock-table"></tbody>
       </table>
     </div>
@@ -416,7 +419,10 @@ textarea{resize:vertical;min-height:70px;}
         <div class="page-title">🧾 Reçus clients</div>
         <div class="page-sub">GÉNÉRATION & IMPRESSION DES REÇUS · GÉRANT SEULEMENT</div>
       </div>
-      <button class="btn btn-primary" onclick="ouvrirNouveauRecu()">➕ Nouveau reçu</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="exporterVentesJourPDF()">📄 PDF ventes du jour</button>
+        <button class="btn btn-primary" onclick="ouvrirNouveauRecu()">➕ Nouveau reçu</button>
+      </div>
     </div>
     <div class="grid-2">
       <!-- Liste des reçus -->
@@ -447,7 +453,7 @@ textarea{resize:vertical;min-height:70px;}
             <div class="fg"><label>NOM BOUTIQUE</label><input type="text" id="printer-boutique" value="Quincaillerie Khadija" placeholder="Nom de la boutique"></div>
           </div>
           <div class="form-row">
-            <div class="fg"><label>ADRESSE</label><input type="text" id="printer-adresse" placeholder="Adresse..."></div>
+            <div class="fg"><label>ADRESSE</label><input type="text" id="printer-adresse" placeholder="Adresse..." value="Keur Thiem Cité Dabakh"></div>
             <div class="fg"><label>TÉLÉPHONE</label><input type="text" id="printer-tel" placeholder="+221..."></div>
           </div>
           <div class="fg"><label>MESSAGE DE PIE DE REÇU</label><input type="text" id="printer-footer" value="Merci de votre visite !" placeholder="Message..."></div>
@@ -535,10 +541,7 @@ textarea{resize:vertical;min-height:70px;}
 <div class="modal-overlay" id="modal-produit">
   <div class="modal">
     <div class="modal-title">➕ Nouveau matériel</div>
-    <div class="form-row">
-      <div class="fg"><label>NOM DU MATÉRIEL *</label><input type="text" id="sp-nom" placeholder="Ex: Tournevis, Câble 2.5mm..."></div>
-      <div class="fg"><label>RÉFÉRENCE</label><input type="text" id="sp-ref" placeholder="Ex: TOOL-001, CAB-2.5..."></div>
-    </div>
+    <div class="fg"><label>NOM DU MATÉRIEL *</label><input type="text" id="sp-nom" placeholder="Ex: Tournevis, Câble 2.5mm..."></div>
     <div class="form-row">
       <div class="fg"><label>CATÉGORIE *</label><select id="sp-cat"><option value="">Choisir...</option></select></div>
       <div class="fg"><label>UNITÉ DE MESURE</label>
@@ -594,10 +597,7 @@ textarea{resize:vertical;min-height:70px;}
   <div class="modal">
     <div class="modal-title">✏️ Modifier le matériel</div>
     <input type="hidden" id="ep-id">
-    <div class="form-row">
-      <div class="fg"><label>NOM *</label><input type="text" id="ep-nom"></div>
-      <div class="fg"><label>RÉFÉRENCE</label><input type="text" id="ep-ref" placeholder="Ex: TOOL-001..."></div>
-    </div>
+    <div class="fg"><label>NOM *</label><input type="text" id="ep-nom"></div>
     <div class="form-row">
       <div class="fg"><label>CATÉGORIE</label><select id="ep-cat"></select></div>
       <div class="fg"><label>UNITÉ</label>
@@ -628,17 +628,16 @@ textarea{resize:vertical;min-height:70px;}
 <!-- MODAL NOUVEAU REÇU -->
 <div class="modal-overlay" id="modal-recu">
   <div class="modal" style="width:600px">
-    <div class="modal-title">🧾 Créer un reçu client</div>
+    <div class="modal-title">🧾 Créer un reçu client
+      <button class="btn btn-ghost" style="padding:5px 14px;font-size:12px;float:right" onclick="syncRecuDepuisVentes()" title="Importer les ventes du jour">🔄 Ventes du jour</button>
+    </div>
     <div class="form-row">
       <div class="fg"><label>NOM DU CLIENT</label><input type="text" id="rc-client" placeholder="Client..."></div>
       <div class="fg"><label>DATE</label><input type="text" id="rc-date" placeholder="jj/mm/aaaa"></div>
     </div>
     <div class="fg"><label>N° REÇU</label><input type="text" id="rc-num" placeholder="Auto-généré..." readonly style="opacity:.6"></div>
     <!-- Articles du reçu -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px">ARTICLES</div>
-      <button class="btn btn-ghost" style="padding:4px 12px;font-size:11px" onclick="syncRecuDepuisVentes()" title="Importer les ventes du jour dans le reçu">🔄 Importer ventes du jour</button>
-    </div>
+    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:8px">ARTICLES</div>
     <div id="rc-articles"></div>
     <button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="ajouterLigneRecu()">➕ Ajouter un article</button>
     <!-- Totaux -->
@@ -834,11 +833,10 @@ function renderStock(filtre=''){
   if(filtre)prods=prods.filter(p=>p.nom.toLowerCase().includes(filtre.toLowerCase()));
   if(cat)prods=prods.filter(p=>p.cat===cat);
   prods=[...prods].sort((a,b)=>a.stock-b.stock);
-  document.getElementById('stock-table').innerHTML=prods.length===0?`<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:24px">Aucun article</td></tr>`:prods.map(p=>{
+  document.getElementById('stock-table').innerHTML=prods.length===0?`<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">Aucun article</td></tr>`:prods.map(p=>{
     const cls=p.stock===0?'sb-bad':p.stock<=p.seuil?'sb-warn':'sb-ok';
     const lbl=p.stock===0?'RUPTURE':p.stock<=p.seuil?`⚠ ${p.stock}`:p.stock;
     return`<tr>
-      <td style="font-family:'DM Mono',monospace;color:var(--text3);font-size:11px">${p.ref?`<span class="bdg bdg-b" style="font-size:10px">${p.ref}</span>`:'—'}</td>
       <td><strong>${p.nom}</strong>${p.description?`<div style="font-size:10px;color:var(--text3);font-style:italic">${p.description}</div>`:''}</td>
       <td><span class="bdg bdg-b">${p.cat}</span></td>
       <td style="color:var(--text3)">${p.unite||'pièce'}</td>
@@ -869,7 +867,7 @@ function renderAlertes(){
 
 // ══ VENTE ══
 function ouvrirVente(){
-  document.getElementById('sv-produit').innerHTML='<option value="">Choisir l\'article...</option>'+S.produits.filter(p=>p.stock>0).map(p=>`<option value="${p.id}">${p.ref?'['+p.ref+'] ':''} ${p.nom} — ${p.stock} ${p.unite} dispo</option>`).join('');
+  document.getElementById('sv-produit').innerHTML='<option value="">Choisir l\'article...</option>'+S.produits.filter(p=>p.stock>0).map(p=>`<option value="${p.id}">${p.nom} — ${p.stock} ${p.unite} dispo</option>`).join('');
   document.getElementById('sv-qty').value=1;document.getElementById('sv-prix').value='';document.getElementById('sv-client').value='';
   document.getElementById('sv-info').style.display='none';document.getElementById('sv-total-box').style.display='none';
   ouvrirModal('modal-vente');
@@ -912,7 +910,7 @@ async function validerVente(){
 
 // ══ RÉCEPTION ══
 function ouvrirReception(){
-  document.getElementById('sr-produit').innerHTML='<option value="">Choisir l\'article...</option>'+S.produits.map(p=>`<option value="${p.id}">${p.ref?'['+p.ref+'] ':''} ${p.nom} — stock: ${p.stock} ${p.unite}</option>`).join('');
+  document.getElementById('sr-produit').innerHTML='<option value="">Choisir l\'article...</option>'+S.produits.map(p=>`<option value="${p.id}">${p.nom} — stock: ${p.stock} ${p.unite}</option>`).join('');
   document.getElementById('sr-qty').value=1;document.getElementById('sr-prix').value='';document.getElementById('sr-note').value='';
   document.getElementById('sr-info').style.display='none';document.getElementById('sr-total-box').style.display='none';
   ouvrirModal('modal-reception');
@@ -961,7 +959,6 @@ async function validerReception(){
 function ouvrirModal(id){
   if(id==='modal-produit'){
     document.getElementById('sp-nom').value='';
-    document.getElementById('sp-ref').value='';
     document.getElementById('sp-desc').value='';
     document.getElementById('sp-unite').value='pièce';
     document.getElementById('sp-cat').innerHTML='<option value="">Choisir...</option>'+S.categories.map(c=>`<option>${c}</option>`).join('');
@@ -988,7 +985,6 @@ async function ajouterProduit(){
   try{
     await sbPost('produits',{
       nom, cat,
-      ref: document.getElementById('sp-ref').value.trim()||'',
       unite: document.getElementById('sp-unite').value||'pièce',
       description: document.getElementById('sp-desc').value||'',
       stock: parseInt(document.getElementById('sp-stock').value)||0,
@@ -1056,7 +1052,6 @@ function ouvrirEditProduit(id){
   const p=S.produits.find(x=>x.id===id);if(!p)return;
   document.getElementById('ep-id').value=id;
   document.getElementById('ep-nom').value=p.nom;
-  document.getElementById('ep-ref').value=p.ref||'';
   document.getElementById('ep-desc').value=p.description||'';
   document.getElementById('ep-stock').value=p.stock;
   document.getElementById('ep-seuil').value=p.seuil;
@@ -1073,7 +1068,6 @@ async function sauvegarderProduit(){
   try{
     await sbPatch('produits',id,{
       nom: document.getElementById('ep-nom').value,
-      ref: document.getElementById('ep-ref').value.trim()||'',
       cat: document.getElementById('ep-cat').value,
       unite: document.getElementById('ep-unite').value,
       description: document.getElementById('ep-desc').value,
@@ -1133,7 +1127,7 @@ function renderInventaire(filtre=''){
     const valStock=p.stock*p.achat;
     totQty+=p.stock;totAchat+=p.achat;totVente+=p.vente;totVal+=valStock;
     return`<tr>
-      <td style="font-family:'DM Mono',monospace;color:var(--text3);font-size:11px">${p.ref?`<span class="bdg bdg-b" style="font-size:10px">${p.ref}</span>`:`#${String(i+1).padStart(3,'0')}`}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--text3);font-size:11px">#${String(i+1).padStart(3,'0')}</td>
       <td><strong>${p.nom}</strong>${p.description?`<div style="font-size:10px;color:var(--text3)">${p.description}</div>`:''}</td>
       <td><span class="bdg bdg-b">${p.cat}</span></td>
       <td style="color:var(--text3)">${p.unite||'pièce'}</td>
@@ -1175,7 +1169,7 @@ function exporterInventaireCSV(){
 
 // ══ REÇUS ══
 let RECUS=[];let RECU_LINES=1;
-let PRINTER_CONFIG={boutique:'Quincaillerie Khadija',adresse:'',tel:'',footer:'Merci de votre visite !',type:'thermal80'};
+let PRINTER_CONFIG={boutique:'Quincaillerie Khadija',adresse:'Keur Thiem Cité Dabakh',tel:'',footer:'Merci de votre visite !',type:'thermal80'};
 
 function chargerConfigImprimante(){
   try{const c=JSON.parse(localStorage.getItem('printer_config')||'{}');Object.assign(PRINTER_CONFIG,c);}catch(e){}
@@ -1219,39 +1213,6 @@ function renderRecus(filtre=''){
   </div>`).join('');
 }
 function filtrerRecus(v){renderRecus(v);}
-
-// ══ SYNC REÇU DEPUIS VENTES DU JOUR ══
-function syncRecuDepuisVentes(){
-  const today=new Date().toLocaleDateString('fr-FR');
-  const ventesJour=S.ventes.filter(v=>v.employe===NOM&&v.date===today);
-  if(ventesJour.length===0){toast('⚠️ Aucune vente aujourd\'hui à importer');return;}
-  // Regrouper par produit (fusionner les lignes identiques)
-  const grouped={};
-  ventesJour.forEach(v=>{
-    if(grouped[v.nom]){grouped[v.nom].qty+=v.qty;grouped[v.nom].total+=v.total;}
-    else{grouped[v.nom]={nom:v.nom,qty:v.qty,prix:v.pv,total:v.total};}
-  });
-  // Vider les lignes existantes
-  document.getElementById('rc-articles').innerHTML='';
-  RECU_LINES=0;
-  // Remplir avec les ventes du jour
-  const articles=Object.values(grouped);
-  articles.forEach(a=>{
-    RECU_LINES++;
-    const id='rl'+RECU_LINES;
-    const div=document.createElement('div');
-    div.className='rc-ligne';div.id=id;
-    const produit=S.produits.find(p=>p.nom===a.nom);
-    const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}" ${p.nom===a.nom?'selected':''}>${p.ref?'['+p.ref+'] ':''} ${p.nom}</option>`).join('');
-    div.innerHTML=`<select onchange="onRecuProduit('${id}')">${opts}</select><input type="number" id="${id}-qty" value="${a.qty}" min="1" oninput="calcRecu()" placeholder="Qté"><input type="number" id="${id}-prix" value="${a.prix}" placeholder="Prix unit." oninput="calcRecu()"><button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
-    document.getElementById('rc-articles').appendChild(div);
-  });
-  // Remplir le client avec la valeur des ventes si disponible
-  const clientsUniques=[...new Set(ventesJour.map(v=>v.client).filter(Boolean))];
-  if(clientsUniques.length===1)document.getElementById('rc-client').value=clientsUniques[0];
-  calcRecu();
-  toast('✅ '+articles.length+' article(s) importé(s) depuis vos ventes du jour');
-}
 function ouvrirNouveauRecu(){
   RECU_LINES=0;
   document.getElementById('rc-articles').innerHTML='';
@@ -1271,7 +1232,7 @@ function ajouterLigneRecu(){
   const id='rl'+RECU_LINES;
   const div=document.createElement('div');
   div.className='rc-ligne';div.id=id;
-  const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}">${p.ref?'['+p.ref+'] ':''} ${p.nom}</option>`).join('');
+  const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}">${p.nom}</option>`).join('');
   div.innerHTML=`<select onchange="onRecuProduit('${id}')">${opts}</select><input type="number" id="${id}-qty" value="1" min="1" oninput="calcRecu()" placeholder="Qté"><input type="number" id="${id}-prix" placeholder="Prix unit." oninput="calcRecu()"><button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
   document.getElementById('rc-articles').appendChild(div);
 }
@@ -1384,6 +1345,96 @@ function supprimerRecu(num){
   if(ap.innerHTML.includes(num))ap.innerHTML='<div style="color:#999;text-align:center;font-size:13px;padding:40px"><div style="font-size:36px;margin-bottom:10px;opacity:.3">🧾</div>Crée ou sélectionne un reçu</div>';
   renderRecus();
   toast('🗑️ Reçu supprimé');
+}
+
+// ══ SYNC REÇU DEPUIS VENTES DU JOUR ══
+function syncRecuDepuisVentes(){
+  const today=new Date().toLocaleDateString('fr-FR');
+  const ventesJour=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
+  if(ventesJour.length===0){toast('⚠️ Aucune vente enregistrée aujourd\'hui');return;}
+  // Regrouper par article
+  const grouped={};
+  ventesJour.forEach(v=>{
+    if(!grouped[v.nom])grouped[v.nom]={nom:v.nom,qty:0,prix:v.pv,total:0};
+    grouped[v.nom].qty+=v.qty;
+    grouped[v.nom].total+=v.total;
+    grouped[v.nom].prix=Math.round(grouped[v.nom].total/grouped[v.nom].qty);
+  });
+  // Vider les lignes existantes
+  document.getElementById('rc-articles').innerHTML='';
+  RECU_LINES=0;
+  // Ajouter une ligne par article
+  Object.values(grouped).forEach(item=>{
+    RECU_LINES++;
+    const id='rl'+RECU_LINES;
+    const div=document.createElement('div');
+    div.className='rc-ligne';div.id=id;
+    const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}" ${p.nom===item.nom?'selected':''}>${p.nom}</option>`).join('');
+    div.innerHTML=`<select onchange="onRecuProduit('${id}')">${opts}</select><input type="number" id="${id}-qty" value="${item.qty}" min="1" oninput="calcRecu()" placeholder="Qté"><input type="number" id="${id}-prix" value="${item.prix}" placeholder="Prix unit." oninput="calcRecu()"><button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
+    document.getElementById('rc-articles').appendChild(div);
+  });
+  calcRecu();
+  toast(`✅ ${Object.keys(grouped).length} article(s) importé(s) depuis les ventes du jour`);
+}
+
+// ══ EXPORT PDF VENTES DU JOUR ══
+function exporterVentesJourPDF(){
+  const today=new Date().toLocaleDateString('fr-FR');
+  const ventesJour=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
+  if(ventesJour.length===0){toast('⚠️ Aucune vente aujourd\'hui à exporter');return;}
+  const ca=ventesJour.reduce((s,v)=>s+v.total,0);
+  const bn=ventesJour.reduce((s,v)=>s+v.benef,0);
+  const cfg=PRINTER_CONFIG;
+  const lignes=ventesJour.map((v,i)=>`
+    <tr style="border-bottom:1px solid #eee">
+      <td style="padding:6px 8px;font-size:12px">${String(i+1).padStart(2,'0')}</td>
+      <td style="padding:6px 8px;font-size:12px;font-weight:600">${v.nom}</td>
+      <td style="padding:6px 8px;font-size:12px;text-align:center">${v.qty} ${v.unite||''}</td>
+      <td style="padding:6px 8px;font-size:12px;text-align:right">${fmt(v.pv)}</td>
+      <td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#007a5e">${fmt(v.total)}</td>
+      <td style="padding:6px 8px;font-size:12px;text-align:right;color:#555">${v.client||'—'}</td>
+    </tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Ventes du ${today}</title>
+  <style>
+    body{font-family:Arial,sans-serif;padding:20px;color:#111;background:#fff}
+    .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:12px}
+    .shop{font-size:22px;font-weight:bold;color:#000}
+    .addr{font-size:12px;color:#555;margin-top:4px}
+    .report-title{font-size:16px;font-weight:bold;margin:16px 0 8px}
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:#f0f0f0}
+    th{padding:8px;font-size:11px;text-align:left;text-transform:uppercase;letter-spacing:.5px}
+    .totals{margin-top:16px;border-top:2px solid #000;padding-top:12px;display:flex;justify-content:flex-end;gap:30px}
+    .tot-block{text-align:right}
+    .tot-lbl{font-size:11px;color:#555;text-transform:uppercase}
+    .tot-val{font-size:18px;font-weight:bold;color:#007a5e}
+    .footer{margin-top:24px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:10px}
+    @media print{body{padding:0}}
+  </style></head><body>
+  <div class="header">
+    <div class="shop">🔧 ${cfg.boutique}</div>
+    ${cfg.adresse?`<div class="addr">${cfg.adresse}</div>`:''}
+    ${cfg.tel?`<div class="addr">📞 ${cfg.tel}</div>`:''}
+  </div>
+  <div class="report-title">📋 Rapport des ventes — ${today}</div>
+  <div style="font-size:12px;color:#555;margin-bottom:12px">Gérant : ${NOM} · Généré le ${new Date().toLocaleString('fr-FR')}</div>
+  <table>
+    <thead><tr><th>#</th><th>Article</th><th>Quantité</th><th>Prix unit.</th><th>Total</th><th>Client</th></tr></thead>
+    <tbody>${lignes}</tbody>
+  </table>
+  <div class="totals">
+    <div class="tot-block"><div class="tot-lbl">Nb ventes</div><div class="tot-val" style="color:#333">${ventesJour.length}</div></div>
+    <div class="tot-block"><div class="tot-lbl">Bénéfice</div><div class="tot-val" style="color:#e07a00">${fmt(bn)}</div></div>
+    <div class="tot-block"><div class="tot-lbl">Chiffre d'affaires</div><div class="tot-val">${fmt(ca)}</div></div>
+  </div>
+  <div class="footer">${cfg.footer} · ${cfg.boutique}</div>
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const win=window.open(url,'_blank');
+  if(win){setTimeout(()=>{win.print();},600);}
+  toast('📄 PDF ventes du jour ouvert — lance l\'impression pour sauvegarder en PDF');
 }
 
 // ══ INIT ══
