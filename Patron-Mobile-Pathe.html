@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f0e0b">
-<title>QuincaManager — Patron</title>
+<title>Quincaillerie Khadija — Patron</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -222,7 +222,7 @@ select option{background:var(--surface2);}
 <div class="topbar">
   <div class="topbar-logo">
     <span class="icon">🔧</span>
-    <h1 id="topbar-store-name">Pathé Fall</h1>
+    <h1>Pathé Fall</h1>
     <span class="badge-patron">PATRON</span>
   </div>
   <div class="topbar-right">
@@ -256,8 +256,9 @@ select option{background:var(--surface2);}
   <!-- VENTES -->
   <div class="page" id="page-ventes">
     <div class="section-title">Toutes les ventes</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button onclick="exporterVentesCSV()" style="padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">⬇️ Export CSV</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button onclick="exporterVentesJourCSV()" style="padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:12px;cursor:pointer;">⬇️ CSV du jour</button>
+      <button onclick="exporterRapportPDF()" style="padding:11px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;cursor:pointer;">📄 Rapport PDF</button>
     </div>
     <div class="tabs">
       <button class="tab active" onclick="switchVTab('liste',this)">Historique</button>
@@ -274,15 +275,12 @@ select option{background:var(--surface2);}
   <div class="page" id="page-stock">
     <div class="section-title">Stock & Matériaux</div>
     <!-- Boutons gestion pour le patron -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
       <button onclick="ouvrir('sheet-produit')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;cursor:pointer;">
         <span style="font-size:22px">➕</span><span style="font-size:10px;color:var(--accent);font-family:'DM Sans',sans-serif;font-weight:700">Nouveau</span>
       </button>
       <button onclick="ouvrir('sheet-edit-produit-sel')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--blue);border-radius:12px;cursor:pointer;">
         <span style="font-size:22px">✏️</span><span style="font-size:10px;color:var(--blue);font-family:'DM Sans',sans-serif;font-weight:700">Modifier</span>
-      </button>
-      <button onclick="ouvrirReception()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--green);border-radius:12px;cursor:pointer;">
-        <span style="font-size:22px">📥</span><span style="font-size:10px;color:var(--green);font-family:'DM Sans',sans-serif;font-weight:700">Récevoir</span>
       </button>
       <button onclick="ouvrir('sheet-categorie')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;">
         <span style="font-size:22px">🏷️</span><span style="font-size:10px;color:var(--text2);font-family:'DM Sans',sans-serif;font-weight:700">Catégorie</span>
@@ -301,83 +299,28 @@ select option{background:var(--surface2);}
     <div class="card"><div class="card-title">🔴 Rupture totale</div><div id="al-rupture"></div></div>
     <div class="card"><div class="card-title">🟡 Stock faible</div><div id="al-faible"></div></div>
     <div class="card"><div class="card-title">📋 À commander</div><div id="al-commande"></div></div>
-    <div class="card">
-      <div class="card-title">🧾 Liste commande détaillée</div>
-      <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr>
-          <th style="padding:8px 6px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border)">Article</th>
-          <th style="padding:8px 6px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border)">Stock</th>
-          <th style="padding:8px 6px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border)">Seuil</th>
-          <th style="padding:8px 6px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border)">Qté à cmd</th>
-          <th style="padding:8px 6px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border)">Fournisseur</th>
-          <th style="padding:8px 6px;text-align:right;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;border-bottom:1px solid var(--border)">Coût estimé</th>
-        </tr></thead>
-        <tbody id="al-table-detail"></tbody>
-      </table>
-      </div>
-    </div>
   </div>
 
   <!-- INVENTAIRE -->
   <div class="page" id="page-inventaire">
-    <div class="section-title">Inventaire</div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <button onclick="exporterInventaireCSV()" style="flex:1;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">⬇️ Export CSV</button>
-      <button onclick="lancerInventaire()" style="flex:1;padding:10px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">🔄 Actualiser</button>
-    </div>
-    <!-- KPI inventaire -->
+    <div class="section-title">📋 Inventaire</div>
     <div class="kpi-row">
       <div class="kpi-card kc-a"><span class="kpi-emoji">📦</span><div class="kpi-label">TOTAL ARTICLES</div><div class="kpi-value" id="inv-total">—</div><div class="kpi-sub" id="inv-total-sub">—</div></div>
-      <div class="kpi-card kc-b"><span class="kpi-emoji">💰</span><div class="kpi-label">VAL. ACHAT</div><div class="kpi-value" id="inv-val-achat">—</div><div class="kpi-sub">coût total</div></div>
+      <div class="kpi-card kc-b"><span class="kpi-emoji">💰</span><div class="kpi-label">VALEUR (ACHAT)</div><div class="kpi-value" id="inv-val-achat">—</div><div class="kpi-sub">coût total</div></div>
     </div>
     <div class="kpi-row">
-      <div class="kpi-card kc-g"><span class="kpi-emoji">📈</span><div class="kpi-label">VAL. VENTE</div><div class="kpi-value" id="inv-val-vente">—</div><div class="kpi-sub">prix revente</div></div>
-      <div class="kpi-card kc-r"><span class="kpi-emoji">⚠️</span><div class="kpi-label">CRITIQUES</div><div class="kpi-value" id="inv-critiques">—</div><div class="kpi-sub">ruptures+faibles</div></div>
+      <div class="kpi-card kc-g"><span class="kpi-emoji">📈</span><div class="kpi-label">VALEUR (VENTE)</div><div class="kpi-value" id="inv-val-vente">—</div><div class="kpi-sub">prix de revente</div></div>
+      <div class="kpi-card kc-r"><span class="kpi-emoji">⚠️</span><div class="kpi-label">CRITIQUES</div><div class="kpi-value" id="inv-critiques">—</div><div class="kpi-sub">ruptures + faibles</div></div>
     </div>
-    <!-- Filtres -->
-    <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher..." oninput="filtrerInventaire(this.value)"></div>
-    <select id="inv-filtre-cat" onchange="filtrerInventaire('')" style="width:100%;margin-bottom:8px;padding:10px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;">
-      <option value="">📂 Toutes catégories</option>
-    </select>
-    <select id="inv-filtre-statut" onchange="filtrerInventaire('')" style="width:100%;margin-bottom:12px;padding:10px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;">
-      <option value="">Tous statuts</option>
-      <option value="ok">✅ OK</option>
-      <option value="faible">⚠️ Faible</option>
-      <option value="rupture">❌ Rupture</option>
-    </select>
-    <!-- Liste inventaire -->
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
-        <thead><tr style="background:var(--surface2)">
-          <th style="padding:10px 8px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px">ARTICLE</th>
-          <th style="padding:10px 8px;text-align:left;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">CAT.</th>
-          <th style="padding:10px 8px;text-align:center;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">STOCK</th>
-          <th style="padding:10px 8px;text-align:center;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">SEUIL</th>
-          <th style="padding:10px 8px;text-align:right;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">P.ACHAT</th>
-          <th style="padding:10px 8px;text-align:right;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">P.VENTE</th>
-          <th style="padding:10px 8px;text-align:right;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">VALEUR</th>
-          <th style="padding:10px 8px;text-align:center;color:var(--text3);font-family:'DM Mono',monospace;font-size:9px">STATUT</th>
-        </tr></thead>
-        <tbody id="inventaire-table"></tbody>
-        <tfoot>
-          <tr style="border-top:2px solid var(--border);background:var(--surface2)">
-            <td colspan="2" style="padding:8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">TOTAUX</td>
-            <td id="inv-total-qty" style="padding:8px;text-align:center;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;font-size:11px">—</td>
-            <td></td>
-            <td id="inv-foot-achat" style="padding:8px;text-align:right;font-family:'DM Mono',monospace;color:var(--blue);font-size:11px">—</td>
-            <td id="inv-foot-vente" style="padding:8px;text-align:right;font-family:'DM Mono',monospace;color:var(--accent);font-size:11px">—</td>
-            <td id="inv-foot-val" style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-weight:700;color:var(--accent);font-size:11px">—</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-      </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button onclick="exporterInventaireCSV()" style="padding:11px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:12px;cursor:pointer;">⬇️ CSV</button>
+      <button onclick="exporterRapportPDF()" style="padding:11px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;cursor:pointer;">📄 Rapport PDF</button>
     </div>
-    <!-- Par catégorie et urgents -->
-    <div class="card"><div class="card-title">📊 Répartition par catégorie</div><div id="inv-par-cat"></div></div>
-    <div class="card"><div class="card-title">📉 À restock urgent</div><div id="inv-urgent"></div></div>
+    <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher un article..." oninput="filtrerInventaire(this.value)"></div>
+    <select id="inv-filtre-cat" onchange="filtrerInventaire()" style="width:100%;margin-bottom:12px;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;"><option value="">📂 Toutes catégories</option></select>
+    <select id="inv-filtre-statut" onchange="filtrerInventaire()" style="width:100%;margin-bottom:12px;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;-webkit-appearance:none;"><option value="">Tous les statuts</option><option value="ok">OK</option><option value="faible">Faible</option><option value="rupture">Rupture</option></select>
+    <div id="inventaire-list"></div>
+    <div class="card" style="margin-top:12px"><div class="card-title">📊 Par catégorie</div><div id="inv-par-cat"></div></div>
   </div>
 
   <!-- FINANCES -->
@@ -404,40 +347,21 @@ select option{background:var(--surface2);}
   <!-- GESTION -->
   <div class="page" id="page-gestion">
     <div class="section-title">Gestion</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <button onclick="ouvrir('sheet-fournisseur')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;"><span style="font-size:22px">🚚</span><span style="font-size:10px;color:var(--text2)">Fournisseur</span></button>
       <button onclick="ouvrir('sheet-employe')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;"><span style="font-size:22px">👤</span><span style="font-size:10px;color:var(--text2)">Gérant</span></button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
       <button onclick="ouvrir('sheet-categorie')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1px solid var(--border);border-radius:12px;cursor:pointer;"><span style="font-size:22px">🏷️</span><span style="font-size:10px;color:var(--text2)">Catégorie</span></button>
-      <button onclick="ouvrirReception()" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--green);border-radius:12px;cursor:pointer;"><span style="font-size:22px">📥</span><span style="font-size:10px;color:var(--green);font-weight:700">Réceptionner</span></button>
+      <button onclick="ouvrir('sheet-reception')" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;background:var(--surface);border:1.5px solid var(--blue);border-radius:12px;cursor:pointer;"><span style="font-size:22px">📥</span><span style="font-size:10px;color:var(--blue);font-weight:700">Réceptionner</span></button>
     </div>
     <div class="card"><div class="card-title">🚚 Fournisseurs <span class="bdg bdg-b" id="nb-fours">0</span></div><div id="four-list"></div></div>
     <div class="card"><div class="card-title">👤 Gérants <span class="bdg bdg-b" id="nb-emps">0</span></div><div id="emp-list"></div></div>
     <div class="card"><div class="card-title">📥 Réceptions récentes</div><div id="rec-list"></div></div>
-    <!-- Paramètres boutique -->
-    <div class="card">
-      <div class="card-title">⚙️ Paramètres boutique</div>
-      <div class="fg"><label>NOM DE LA QUINCAILLERIE</label>
-        <input type="text" id="param-boutique" placeholder="Ex: Quincaillerie Khadija">
-      </div>
-      <div class="fg"><label>NOM DU PATRON</label>
-        <input type="text" id="param-patron" placeholder="Ex: Pathé Fall">
-      </div>
-      <div class="fg"><label>ADRESSE</label>
-        <input type="text" id="param-adresse" placeholder="Ex: Keur Thiem Cité Dabakh">
-      </div>
-      <div class="fg"><label>TÉLÉPHONE</label>
-        <input type="text" id="param-tel" placeholder="+221 ...">
-      </div>
-      <button onclick="sauvegarderParametres()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">✓ Sauvegarder les paramètres</button>
-    </div>
   </div>
 
 </div>
 
 <!-- BOTTOM NAV -->
-<nav class="bottom-nav" style="overflow-x:auto">
+<nav class="bottom-nav">
   <button class="nav-item active" onclick="goTo('dashboard',this)"><span class="ni">📊</span><span class="nl">ACCUEIL</span></button>
   <button class="nav-item" onclick="goTo('ventes',this)"><span class="ni">💰</span><span class="nl">VENTES</span></button>
   <button class="nav-item" onclick="goTo('stock',this)"><span class="ni">📦</span><span class="nl">STOCK</span></button>
@@ -507,57 +431,6 @@ select option{background:var(--surface2);}
   </div>
 </div>
 
-<!-- SHEET RÉCEPTION -->
-<div class="sheet-overlay" id="sheet-reception">
-  <div class="sheet"><div class="sh"></div><div class="sheet-title">📥 Réceptionner une livraison</div>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:12px">Une livraison vient d'arriver ? Remplis ce formulaire.</p>
-    <div class="fg"><label>ARTICLE REÇU *</label>
-      <select id="sr-produit" onchange="onSelectReception()"><option value="">Choisir l'article...</option></select>
-    </div>
-    <div id="sr-info" style="display:none">
-      <div class="info-box">
-        <div class="ib-row"><span class="ib-lbl">Stock actuel</span><span class="ib-val" id="sr-stock">—</span></div>
-        <div class="ib-row"><span class="ib-lbl">Fournisseur habituel</span><span class="ib-val" id="sr-four">—</span></div>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="fg"><label>QUANTITÉ REÇUE *</label><input type="number" id="sr-qty" value="1" min="1" oninput="calcReception()"></div>
-      <div class="fg"><label>PRIX ACHAT UNIT. (F)</label><input type="number" id="sr-prix" placeholder="0" oninput="calcReception()"></div>
-    </div>
-    <div id="sr-total-box" style="display:none;background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;">
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">COÛT TOTAL LIVRAISON</div>
-      <div id="sr-total" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--blue)">—</div>
-      <div id="sr-new-stock" style="font-size:11px;color:var(--text3);margin-top:4px;font-family:'DM Mono',monospace"></div>
-    </div>
-    <div class="fg"><label>NOTE / N° BON DE LIVRAISON</label><input type="text" id="sr-note" placeholder="Numéro BL, remarque..."></div>
-    <div class="sactions">
-      <button class="btn btn-ghost" onclick="fermer('sheet-reception')">Annuler</button>
-      <button class="btn" style="flex:1;background:var(--blue);color:#fff" onclick="validerReception()">✓ Valider la réception</button>
-    </div>
-  </div>
-</div>
-
-<!-- SHEET MODIFIER/SUPPRIMER VENTE -->
-<div class="sheet-overlay" id="sheet-edit-vente">
-  <div class="sheet"><div class="sh"></div><div class="sheet-title">✏️ Modifier la vente</div>
-    <input type="hidden" id="ev-id">
-    <div class="fg"><label>ARTICLE</label><input type="text" id="ev-nom" readonly style="opacity:.6;cursor:not-allowed"></div>
-    <div class="form-row">
-      <div class="fg"><label>QUANTITÉ</label><input type="number" id="ev-qty" min="1" oninput="calcEditVente()"></div>
-      <div class="fg"><label>PRIX UNITAIRE (F)</label><input type="number" id="ev-prix" min="0" oninput="calcEditVente()"></div>
-    </div>
-    <div class="fg"><label>CLIENT</label><input type="text" id="ev-client" placeholder="Nom du client..."></div>
-    <div id="ev-total-box" style="display:none;background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">NOUVEAU TOTAL</div>
-      <div id="ev-total" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">—</div>
-    </div>
-    <div class="sactions">
-      <button class="btn btn-danger" onclick="supprimerVente()">🗑 Suppr.</button>
-      <button class="btn btn-a" onclick="sauvegarderVente()">✓ Sauvegarder</button>
-    </div>
-  </div>
-</div>
-
 <div class="sheet-overlay" id="sheet-fournisseur">
   <div class="sheet"><div class="sh"></div><div class="sheet-title">🚚 Nouveau fournisseur</div>
     <div class="fg"><label>NOM *</label><input type="text" id="sf-nom" placeholder="Entreprise..."></div>
@@ -591,6 +464,27 @@ select option{background:var(--surface2);}
     <div class="sactions">
       <button class="btn btn-ghost" onclick="fermer('sheet-categorie')">Annuler</button>
       <button class="btn btn-a" onclick="ajouterCategorie()">✓ Créer</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="sheet-reception">
+  <div class="sheet"><div class="sh"></div><div class="sheet-title">📥 Réceptionner une livraison</div>
+    <div class="fg"><label>ARTICLE REÇU *</label><select id="sr-produit" onchange="onSelectReception()"><option value="">Choisir...</option></select></div>
+    <div id="sr-info" style="display:none"><div class="info-box"><div class="ib-row"><span class="ib-lbl">Stock actuel</span><span class="ib-val" id="sr-stock">—</span></div><div class="ib-row"><span class="ib-lbl">Fournisseur habituel</span><span class="ib-val" id="sr-four">—</span></div></div></div>
+    <div class="form-row">
+      <div class="fg"><label>QUANTITÉ REÇUE *</label><input type="number" id="sr-qty" value="1" min="1" oninput="calcReception()"></div>
+      <div class="fg"><label>PRIX ACHAT UNITAIRE (F)</label><input type="number" id="sr-prix" placeholder="0" oninput="calcReception()"></div>
+    </div>
+    <div id="sr-total-box" style="display:none;background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:4px">COÛT TOTAL LIVRAISON</div>
+      <div id="sr-total" style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--blue)">—</div>
+      <div id="sr-new-stock" style="font-size:11px;color:var(--text3);margin-top:4px;font-family:'DM Mono',monospace"></div>
+    </div>
+    <div class="fg"><label>NOTE / N° BON DE LIVRAISON</label><input type="text" id="sr-note" placeholder="Numéro BL, remarque..."></div>
+    <div class="sactions">
+      <button class="btn btn-ghost" onclick="fermer('sheet-reception')">Annuler</button>
+      <button class="btn btn-a" style="background:var(--blue);color:#fff" onclick="validerReception()">✓ Valider</button>
     </div>
   </div>
 </div>
@@ -723,7 +617,7 @@ let vtabActif='liste';
 function switchVTab(tab,btn){vtabActif=tab;document.querySelectorAll('#page-ventes .tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.getElementById('vt-liste').style.display=tab==='liste'?'block':'none';document.getElementById('vt-gerant').style.display=tab==='gerant'?'block':'none';if(tab==='gerant')renderVentesParGerant();}
 function renderVentes(filtre=''){
   const rows=S.ventes.filter(v=>!filtre||v.nom.toLowerCase().includes(filtre.toLowerCase()));
-  document.getElementById('ventes-list').innerHTML=rows.length===0?'<div class="empty"><span class="ei">💸</span>Aucune vente</div>':rows.map(v=>{const mg=v.pv>0?Math.round((v.pv-v.pa)/v.pv*100):0;return`<div class="vente-item"><div class="vi-top"><div class="vi-nom">${v.nom}</div><div class="vi-total">${fmt(v.total)}</div></div><div class="vi-bot"><div class="vi-info">${v.date} · qté ${v.qty} ${v.unite||''} · ${v.employe||'?'} ${v.client?'· '+v.client:''}</div><div class="vi-benef">+${fmt(v.benef)} (${mg}%)</div></div><div style="display:flex;gap:6px;margin-top:6px"><button onclick="ouvrirEditVente('${v.id}')" style="flex:1;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">✏️ Modifier</button><button onclick="supprimerVentePat('${v.id}')" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(232,80,32,.3);background:rgba(232,80,32,.1);color:var(--red);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">🗑️</button></div></div>`;}).join('');
+  document.getElementById('ventes-list').innerHTML=rows.length===0?'<div class="empty"><span class="ei">💸</span>Aucune vente</div>':rows.map(v=>{const mg=v.pv>0?Math.round((v.pv-v.pa)/v.pv*100):0;return`<div class="vente-item"><div class="vi-top"><div class="vi-nom">${v.nom}</div><div class="vi-total">${fmt(v.total)}</div></div><div class="vi-bot"><div class="vi-info">${v.date} · qté ${v.qty} ${v.unite||''} · ${v.employe||'?'} ${v.client?'· '+v.client:''}</div><div class="vi-benef">+${fmt(v.benef)} (${mg}%)</div></div></div>`;}).join('');
 }
 function filtrerVentes(v){renderVentes(v);}
 function renderVentesParGerant(){
@@ -754,13 +648,10 @@ function filtrerStock(v){renderStock(typeof v==='string'?v:'');}
 // ── ALERTES ──
 function renderAlertes(){
   const rupt=S.produits.filter(p=>p.stock===0);const faib=S.produits.filter(p=>p.stock>0&&p.stock<=p.seuil);
-  document.getElementById('al-rupture').innerHTML=rupt.length===0?'<div class="empty" style="padding:16px"><span class="ei">✅</span>Aucune rupture</div>':rupt.map(p=>`<div class="alert-item"><div class="alert-dot ad-r"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">${p.cat} · ${p.four||'—'}</div></div><button onclick="ouvrirRecPour('${p.id}')" style="padding:4px 10px;border-radius:6px;border:none;background:rgba(64,144,232,.15);color:var(--blue);font-size:11px;cursor:pointer">📥</button></div>`).join('');
+  document.getElementById('al-rupture').innerHTML=rupt.length===0?'<div class="empty" style="padding:16px"><span class="ei">✅</span>Aucune rupture</div>':rupt.map(p=>`<div class="alert-item"><div class="alert-dot ad-r"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">${p.cat} · ${p.four||'—'}</div></div><span class="bdg bdg-r">0</span></div>`).join('');
   document.getElementById('al-faible').innerHTML=faib.length===0?'<div class="empty" style="padding:16px"><span class="ei">✅</span>Stock suffisant</div>':faib.map(p=>`<div class="alert-item"><div class="alert-dot ad-a"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">Stock: ${p.stock} · Seuil: ${p.seuil}</div></div><span class="bdg bdg-a">${p.stock} rest.</span></div>`).join('');
   const cmd=[...rupt,...faib];
   document.getElementById('al-commande').innerHTML=cmd.length===0?'<div class="empty" style="padding:16px"><span class="ei">🎉</span>Rien à commander</div>':cmd.map(p=>{const qte=Math.max(p.seuil*3-p.stock,p.seuil);return`<div class="alert-item"><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">${p.four||'—'} · stock: ${p.stock}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:700">${qte} ${p.unite||''}</div><div style="font-size:10px;color:var(--text3)">${fmt(qte*p.achat)}</div></div></div>`;}).join('');
-  // Table détaillée
-  const tEl=document.getElementById('al-table-detail');
-  if(tEl)tEl.innerHTML=cmd.length===0?`<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:16px;font-size:12px">🎉 Rien à commander !</td></tr>`:cmd.map(p=>{const qte=Math.max(p.seuil*3-p.stock,p.seuil);return`<tr style="border-bottom:1px solid rgba(46,43,36,.5)"><td style="padding:8px 6px;font-size:12px;color:var(--text);font-weight:600">${p.nom}</td><td style="padding:8px 6px"><span class="bdg ${p.stock===0?'bdg-r':'bdg-a'}">${p.stock}</span></td><td style="padding:8px 6px;font-size:12px;color:var(--text3)">${p.seuil}</td><td style="padding:8px 6px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:700">${qte} ${p.unite||''}</td><td style="padding:8px 6px;font-size:12px;color:var(--text3)">${p.four||'—'}</td><td style="padding:8px 6px;font-family:'DM Mono',monospace;font-size:12px;text-align:right">${fmt(qte*p.achat)}</td></tr>`;}).join('');
 }
 
 // ── FINANCES ──
@@ -787,43 +678,12 @@ function renderFinances(){
     <div class="stat-row"><span class="stat-lbl">Valeur du stock</span><span class="stat-val">${fmt(S.produits.reduce((s,p)=>s+p.stock*p.achat,0))}</span></div>`;
 }
 
-// ── PARAMÈTRES BOUTIQUE ──
-let PARAMS={boutique:'Quincaillerie Khadija',patron:'Pathé Fall',adresse:'Keur Thiem Cité Dabakh',tel:''};
-function chargerParametres(){
-  try{const p=JSON.parse(localStorage.getItem('qm_params')||'{}');Object.assign(PARAMS,p);}catch(e){}
-  appliquerParametres();
-}
-function appliquerParametres(){
-  const el=document.getElementById('topbar-store-name');
-  if(el)el.textContent=PARAMS.boutique||'Pathé Fall';
-  const loginTitle=document.querySelector('.login-title');
-  if(loginTitle)loginTitle.textContent=PARAMS.patron||'Pathé Fall';
-  const loginSub=document.querySelector('.login-sub');
-  if(loginSub)loginSub.textContent=(PARAMS.boutique||'QUINCAMANAGER').toUpperCase()+' · PATRON';
-}
-function sauvegarderParametres(){
-  PARAMS.boutique=document.getElementById('param-boutique').value.trim()||PARAMS.boutique;
-  PARAMS.patron=document.getElementById('param-patron').value.trim()||PARAMS.patron;
-  PARAMS.adresse=document.getElementById('param-adresse').value.trim();
-  PARAMS.tel=document.getElementById('param-tel').value.trim();
-  localStorage.setItem('qm_params',JSON.stringify(PARAMS));
-  appliquerParametres();
-  toast('✅ Paramètres sauvegardés');
-}
-function chargerChampsParametres(){
-  document.getElementById('param-boutique').value=PARAMS.boutique;
-  document.getElementById('param-patron').value=PARAMS.patron;
-  document.getElementById('param-adresse').value=PARAMS.adresse;
-  document.getElementById('param-tel').value=PARAMS.tel;
-}
-
 // ── GESTION ──
 function renderGestion(){
   document.getElementById('nb-fours').textContent=S.fournisseurs.length;document.getElementById('nb-emps').textContent=S.employes.length;
   document.getElementById('four-list').innerHTML=S.fournisseurs.length===0?'<div class="empty" style="padding:12px">Aucun fournisseur</div>':S.fournisseurs.map(f=>`<div class="list-item"><div class="list-av">🚚</div><div class="list-info"><div class="list-name">${f.nom}</div><div class="list-sub">${f.tel||'—'} · ${f.spec||'—'}</div></div></div>`).join('');
   document.getElementById('emp-list').innerHTML=S.employes.length===0?'<div class="empty" style="padding:12px">Aucun gérant</div>':S.employes.map(e=>`<div class="list-item"><div class="list-av">👤</div><div class="list-info"><div class="list-name">${e.nom}</div><div class="list-sub">${e.poste||'—'} · ${e.salaire?fmt(e.salaire)+'/mois':'—'}</div></div><span class="bdg ${e.actif?'bdg-g':'bdg-r'}">${e.actif?'Actif':'Inactif'}</span></div>`).join('');
   document.getElementById('rec-list').innerHTML=S.receptions.length===0?'<div class="empty" style="padding:12px">Aucune réception</div>':S.receptions.slice(0,8).map(r=>`<div class="tx-item"><div class="tx-left"><div class="tx-icon txi-r">📥</div><div><div class="tx-name">${r.nom}</div><div class="tx-date">${r.date} · +${r.qty} ${r.unite||''} · ${r.employe||'?'}</div></div></div><div class="tx-amount tx-neg">${fmt(r.total)}</div></div>`).join('');
-  chargerChampsParametres();
 }
 
 // ── ACTIONS PATRON (gestion stock/fournisseurs) ──
@@ -873,35 +733,23 @@ function ouvrir(id){
   if(id==='sheet-produit'){['sp-nom','sp-desc'].forEach(i=>document.getElementById(i).value='');document.getElementById('sp-unite').value='pièce';document.getElementById('sp-cat').innerHTML='<option value="">Choisir...</option>'+S.categories.map(c=>`<option>${c}</option>`).join('');document.getElementById('sp-four').innerHTML='<option value="">Aucun</option>'+S.fournisseurs.map(f=>`<option>${f.nom}</option>`).join('');['sp-stock','sp-achat','sp-vente'].forEach(i=>document.getElementById(i).value=0);document.getElementById('sp-seuil').value=5;}
   if(id==='sheet-edit-produit-sel'){document.getElementById('sel-produit-edit').innerHTML='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}">${p.nom}</option>`).join('');}
   if(id==='sheet-categorie'){document.getElementById('sc-nom').value='';document.getElementById('cats-ex').innerHTML=S.categories.map(c=>`<span class="bdg bdg-b" style="padding:5px 10px">${c}</span>`).join('');}
+  if(id==='sheet-reception'){
+    document.getElementById('sr-produit').innerHTML='<option value="">Choisir l\'article...</option>'+S.produits.map(p=>`<option value="${p.id}">${p.nom} — stock: ${p.stock} ${p.unite||''}</option>`).join('');
+    document.getElementById('sr-qty').value=1;document.getElementById('sr-prix').value='';document.getElementById('sr-note').value='';
+    document.getElementById('sr-info').style.display='none';document.getElementById('sr-total-box').style.display='none';
+  }
   document.getElementById(id).classList.add('open');
 }
 function fermer(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.sheet-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
-// ── UTILS ──
-function fmt(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n))+' F';}
-function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M F';if(n>=1000)return Math.round(n/1000)+'k F';return Math.round(n)+' F';}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
-function updateDate(){const d=new Date();document.getElementById('topbar-date').innerHTML=d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()+'<br>'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
-updateDate();setInterval(updateDate,30000);
-
-
 // ── RÉCEPTION ──
-function ouvrirReception(){
-  document.getElementById('sr-produit').innerHTML='<option value="">Choisir l\'article...</option>'+S.produits.map(p=>`<option value="${p.id}">${p.nom} — stock: ${p.stock} ${p.unite||''}</option>`).join('');
-  document.getElementById('sr-qty').value=1;document.getElementById('sr-prix').value='';document.getElementById('sr-note').value='';
-  document.getElementById('sr-info').style.display='none';document.getElementById('sr-total-box').style.display='none';
-  ouvrir('sheet-reception');
-}
-function ouvrirRecPour(pid){
-  ouvrirReception();
-  setTimeout(()=>{document.getElementById('sr-produit').value=pid;onSelectReception();},100);
-}
 function onSelectReception(){
-  const pid=document.getElementById('sr-produit').value;if(!pid){document.getElementById('sr-info').style.display='none';return;}
+  const pid=document.getElementById('sr-produit').value;
+  if(!pid){document.getElementById('sr-info').style.display='none';return;}
   const p=S.produits.find(x=>x.id===pid);
   document.getElementById('sr-info').style.display='block';
-  document.getElementById('sr-stock').textContent=p.stock+' '+(p.unite||'');
+  document.getElementById('sr-stock').textContent=p.stock+' '+p.unite;
   document.getElementById('sr-four').textContent=p.four||'Non renseigné';
   if(!document.getElementById('sr-prix').value)document.getElementById('sr-prix').value=p.achat||'';
   calcReception();
@@ -924,145 +772,119 @@ async function validerReception(){
   const note=document.getElementById('sr-note').value;
   if(!pid||!qty){toast('⚠️ Choisis un article et une quantité');return;}
   const p=S.produits.find(x=>x.id===pid);
-  setSyncStatus('loading');
   try{
     await sbPatch('produits',pid,{stock:p.stock+qty,achat:prix||p.achat});
     await sbPost('receptions',{produit_id:pid,nom:p.nom,unite:p.unite||'pièce',qty,prix_achat:prix,total:qty*prix,date:new Date().toLocaleDateString('fr-FR'),ts:new Date().toISOString(),note,employe:'Pathé Fall'});
-    fermer('sheet-reception');toast(`✅ +${qty} ${p.unite||''} de "${p.nom}" sauvegardés`);
+    fermer('sheet-reception');toast(`✅ +${qty} ${p.unite} de "${p.nom}" réceptionnés`);
     await charger();renderPage(currentPage);
-  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
+  }catch(e){toast('❌ Erreur: '+e.message);}
 }
 
-// ── MODIFIER / SUPPRIMER VENTE (PATRON) ──
-function ouvrirEditVente(id){
-  const v=S.ventes.find(x=>x.id===id);if(!v)return;
-  document.getElementById('ev-id').value=id;
-  document.getElementById('ev-nom').value=v.nom;
-  document.getElementById('ev-qty').value=v.qty;
-  document.getElementById('ev-prix').value=v.pv;
-  document.getElementById('ev-client').value=v.client||'';
-  document.getElementById('ev-total-box').style.display='block';
-  document.getElementById('ev-total').textContent=fmt(v.pv*v.qty);
-  ouvrir('sheet-edit-vente');
-}
-function calcEditVente(){
-  const q=parseInt(document.getElementById('ev-qty').value)||0;
-  const p=parseInt(document.getElementById('ev-prix').value)||0;
-  document.getElementById('ev-total-box').style.display='block';
-  document.getElementById('ev-total').textContent=fmt(q*p);
-}
-async function sauvegarderVente(){
-  const id=document.getElementById('ev-id').value;
-  const qty=parseInt(document.getElementById('ev-qty').value)||1;
-  const pv=parseInt(document.getElementById('ev-prix').value)||0;
-  const client=document.getElementById('ev-client').value;
-  const v=S.ventes.find(x=>x.id===id);if(!v)return;
-  setSyncStatus('loading');
-  try{
-    await sbPatch('ventes',id,{qty,pv,total:pv*qty,benef:(pv-v.pa)*qty,client});
-    fermer('sheet-edit-vente');toast('✅ Vente modifiée avec succès');
-    await charger();renderVentes();
-  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
-}
-async function supprimerVente(){
-  const id=document.getElementById('ev-id').value;
-  const v=S.ventes.find(x=>x.id===id);
-  if(!confirm(`Supprimer la vente de "${v?.nom}" ?`))return;
-  setSyncStatus('loading');
-  try{
-    await sbDelete('ventes',id);
-    fermer('sheet-edit-vente');toast('🗑️ Vente supprimée');
-    await charger();renderVentes();
-  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
-}
-async function supprimerVentePat(id){
-  const v=S.ventes.find(x=>x.id===id);
-  if(!confirm(`Supprimer la vente de "${v?.nom}" ?`))return;
-  setSyncStatus('loading');
-  try{
-    await sbDelete('ventes',id);toast('🗑️ Vente supprimée');
-    await charger();renderVentes();
-  }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
-}
+// ── UTILS ──
+function fmt(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n))+' F';}
+function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M F';if(n>=1000)return Math.round(n/1000)+'k F';return Math.round(n)+' F';}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
+function updateDate(){const d=new Date();document.getElementById('topbar-date').innerHTML=d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}).toUpperCase()+'<br>'+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+updateDate();setInterval(updateDate,30000);
 
 // ── INVENTAIRE ──
 function renderInventaire(filtre=''){
   const cat=document.getElementById('inv-filtre-cat')?.value||'';
   const statut=document.getElementById('inv-filtre-statut')?.value||'';
-  const sel=document.getElementById('inv-filtre-cat');
-  if(sel)sel.innerHTML='<option value="">📂 Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}" ${c===cat?'selected':''}>${c}</option>`).join('');
+  // Sync filtres catégories
+  const selCat=document.getElementById('inv-filtre-cat');
+  if(selCat&&selCat.options.length<=1)selCat.innerHTML='<option value="">📂 Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
   let prods=[...S.produits];
   if(filtre)prods=prods.filter(p=>p.nom.toLowerCase().includes(filtre.toLowerCase()));
   if(cat)prods=prods.filter(p=>p.cat===cat);
-  if(statut==='rupture')prods=prods.filter(p=>p.stock===0);
+  if(statut==='ok')prods=prods.filter(p=>p.stock>p.seuil);
   else if(statut==='faible')prods=prods.filter(p=>p.stock>0&&p.stock<=p.seuil);
-  else if(statut==='ok')prods=prods.filter(p=>p.stock>p.seuil);
+  else if(statut==='rupture')prods=prods.filter(p=>p.stock===0);
   prods.sort((a,b)=>a.stock-b.stock);
-  // KPI
-  const totalQty=S.produits.reduce((s,p)=>s+p.stock,0);
-  const valAchat=S.produits.reduce((s,p)=>s+p.stock*p.achat,0);
-  const valVente=S.produits.reduce((s,p)=>s+p.stock*p.vente,0);
-  const critiques=S.produits.filter(p=>p.stock<=p.seuil).length;
-  document.getElementById('inv-total').textContent=S.produits.length;
-  document.getElementById('inv-total-sub').textContent=totalQty+' unités au total';
+  const totalQty=prods.reduce((s,p)=>s+p.stock,0);
+  const valAchat=prods.reduce((s,p)=>s+p.stock*p.achat,0);
+  const valVente=prods.reduce((s,p)=>s+p.stock*p.vente,0);
+  const critiques=prods.filter(p=>p.stock<=p.seuil).length;
+  document.getElementById('inv-total').textContent=prods.length;
+  document.getElementById('inv-total-sub').textContent=totalQty+' unités en stock';
   document.getElementById('inv-val-achat').textContent=fmtK(valAchat);
   document.getElementById('inv-val-vente').textContent=fmtK(valVente);
   document.getElementById('inv-critiques').textContent=critiques;
-  // Tableau
-  let totQty=0,totAchat=0,totVente=0,totVal=0;
-  document.getElementById('inventaire-table').innerHTML=prods.length===0?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px;font-size:12px">Aucun article</td></tr>`:prods.map((p,i)=>{
-    const cls=p.stock===0?'bdg-r':p.stock<=p.seuil?'bdg-a':'bdg-g';
-    const lbl=p.stock===0?'RUPTURE':p.stock<=p.seuil?'FAIBLE':'OK';
-    const valStock=p.stock*p.achat;
-    totQty+=p.stock;totAchat+=p.achat;totVente+=p.vente;totVal+=valStock;
-    return`<tr style="border-bottom:1px solid rgba(46,43,36,.5)">
-      <td style="padding:8px;font-size:12px;font-weight:600;color:var(--text)">${p.nom}${p.description?`<div style="font-size:10px;color:var(--text3)">${p.description}</div>`:''}</td>
-      <td style="padding:8px"><span class="bdg bdg-b" style="font-size:9px">${p.cat}</span></td>
-      <td style="padding:8px;text-align:center;font-family:'DM Mono',monospace;font-weight:700;color:${p.stock===0?'var(--red)':p.stock<=p.seuil?'var(--accent)':'var(--text)'}">${p.stock}</td>
-      <td style="padding:8px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${p.seuil}</td>
-      <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${fmt(p.achat)}</td>
-      <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px">${fmt(p.vente)}</td>
-      <td style="padding:8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);font-weight:700">${fmt(valStock)}</td>
-      <td style="padding:8px;text-align:center"><span class="bdg ${cls}" style="font-size:9px">${lbl}</span></td>
-    </tr>`;
+  document.getElementById('inventaire-list').innerHTML=prods.length===0?'<div class="empty"><span class="ei">📦</span>Aucun article trouvé</div>':prods.map((p,i)=>{
+    const cls=p.stock===0?'sb-bad':p.stock<=p.seuil?'sb-warn':'sb-ok';
+    const lbl=p.stock===0?'RUPTURE':p.stock<=p.seuil?`⚠ ${p.stock}`:p.stock;
+    const mg=p.vente>0?Math.round((p.vente-p.achat)/p.vente*100):0;
+    return`<div class="stock-item"><div class="stock-left"><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">#${String(i+1).padStart(3,'0')}</div><div class="stock-nom">${p.nom}</div><div class="stock-meta">${p.cat} · ${p.unite||'pièce'} · marge ${mg}%</div><div class="stock-meta">Achat: ${fmt(p.achat)} · Vente: ${fmt(p.vente)}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="stock-badge ${cls}">${lbl}</span><span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${fmt(p.stock*p.achat)}</span></div></div>`;
   }).join('');
-  document.getElementById('inv-total-qty').textContent=totQty+' u.';
-  document.getElementById('inv-foot-achat').textContent=fmt(totAchat);
-  document.getElementById('inv-foot-vente').textContent=fmt(totVente);
-  document.getElementById('inv-foot-val').textContent=fmt(prods.reduce((s,p)=>s+p.stock*p.achat,0));
   // Par catégorie
-  const catM={};S.produits.forEach(p=>{if(!catM[p.cat])catM[p.cat]={qty:0,val:0,nb:0};catM[p.cat].qty+=p.stock;catM[p.cat].val+=p.stock*p.achat;catM[p.cat].nb++;});
-  const cats=Object.entries(catM).sort((a,b)=>b[1].val-a[1].val);const mxV=cats[0]?.[1].val||1;
-  document.getElementById('inv-par-cat').innerHTML=cats.length===0?'<div class="empty">Aucune donnée</div>':cats.map(([c,d])=>`<div class="pw"><div class="ph"><span class="pl">📦 ${c}</span><span class="pv">${fmtK(d.val)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(d.val/mxV*100)}%;background:var(--blue)"></div></div><div style="font-size:10px;color:var(--text3);margin-top:2px">${d.nb} articles · ${d.qty} unités</div></div>`).join('');
-  // Urgent
-  const urg=S.produits.filter(p=>p.stock<=p.seuil).sort((a,b)=>a.stock-b.stock).slice(0,8);
-  document.getElementById('inv-urgent').innerHTML=urg.length===0?'<div class="empty"><span class="ei">✅</span>Aucun article critique</div>':urg.map(p=>`<div class="alert-item"><div class="alert-dot ${p.stock===0?'ad-r':'ad-a'}"></div><div class="alert-info"><div class="alert-name">${p.nom}</div><div class="alert-desc">Stock: ${p.stock} ${p.unite||''} · Seuil: ${p.seuil}</div></div><button onclick="ouvrirRecPour('${p.id}')" style="padding:4px 8px;border-radius:6px;border:none;background:rgba(64,144,232,.15);color:var(--blue);font-size:11px;cursor:pointer">📥</button></div>`).join('');
+  const catM={};prods.forEach(p=>{if(!catM[p.cat])catM[p.cat]={nb:0,val:0};catM[p.cat].nb++;catM[p.cat].val+=p.stock*p.achat;});
+  const cats=Object.entries(catM).sort((a,b)=>b[1].val-a[1].val);const mxC=cats[0]?.[1].val||1;
+  document.getElementById('inv-par-cat').innerHTML=cats.length===0?'<div class="empty" style="padding:12px">Aucune donnée</div>':cats.map(([c,d])=>`<div class="pw"><div class="ph"><span class="pl">${c} (${d.nb})</span><span class="pv">${fmtK(d.val)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(d.val/mxC*100)}%;background:var(--accent)"></div></div></div>`).join('');
 }
 function filtrerInventaire(v){renderInventaire(typeof v==='string'?v:'');}
-function lancerInventaire(){charger().then(()=>renderInventaire());toast('🔄 Inventaire actualisé');}
+
+// ── EXPORT CSV INVENTAIRE ──
 function exporterInventaireCSV(){
-  const header='Ref,Article,Categorie,Unite,Stock,Seuil,Prix Achat,Prix Vente,Valeur Stock,Statut\n';
-  const rows=S.produits.map((p,i)=>{
-    const st=p.stock===0?'RUPTURE':p.stock<=p.seuil?'FAIBLE':'OK';
-    return`#${String(i+1).padStart(3,'0')},"${p.nom}","${p.cat}","${p.unite||'pièce'}",${p.stock},${p.seuil},${p.achat},${p.vente},${p.stock*p.achat},"${st}"`;
+  if(S.produits.length===0){toast('⚠️ Aucun produit à exporter');return;}
+  const entete='Réf;Article;Catégorie;Unité;Stock;Seuil;Prix Achat;Prix Vente;Valeur Stock;Statut\n';
+  const lignes=S.produits.map((p,i)=>{
+    const statut=p.stock===0?'RUPTURE':p.stock<=p.seuil?'FAIBLE':'OK';
+    return`${String(i+1).padStart(3,'0')};${p.nom};${p.cat};${p.unite||'pièce'};${p.stock};${p.seuil};${p.achat};${p.vente};${p.stock*p.achat};${statut}`;
   }).join('\n');
-  const blob=new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`inventaire_${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.csv`;a.click();
-  toast('✅ Inventaire exporté en CSV');
+  const csv='\uFEFF'+entete+lignes;
+  const today=new Date().toLocaleDateString('fr-FR').replace(/\//g,'-');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Inventaire_${today}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast('⬇️ Inventaire CSV téléchargé — ouvrable dans Excel');
 }
 
-// ── EXPORT VENTES CSV ──
-function exporterVentesCSV(){
-  const entete='Date;Article;Quantité;Unité;Prix unitaire;Total;Bénéfice;Employé;Client\n';
-  const lignes=S.ventes.map(v=>`${v.date};${v.nom};${v.qty};${v.unite||'pièce'};${v.pv};${v.total};${v.benef};${v.employe||''};${v.client||''}`).join('\n');
+// ── EXPORT CSV VENTES DU JOUR ──
+function exporterVentesJourCSV(){
+  const today=new Date().toLocaleDateString('fr-FR');
+  const ventesJour=S.ventes.filter(v=>v.date===today);
+  if(ventesJour.length===0){toast('⚠️ Aucune vente aujourd\'hui');return;}
+  const dateFile=today.replace(/\//g,'-');
+  const entete='Date;Article;Quantité;Unité;Prix unitaire;Total;Bénéfice;Client;Gérant\n';
+  const lignes=ventesJour.map(v=>`${v.date};${v.nom};${v.qty};${v.unite||'pièce'};${v.pv};${v.total};${v.benef};${v.client||''};${v.employe||''}`).join('\n');
   const csv='\uFEFF'+entete+lignes;
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ventes_${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.csv`;a.click();
-  toast('⬇️ Export CSV téléchargé');
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Ventes_${dateFile}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast('⬇️ CSV ventes du jour téléchargé');
 }
 
-async function init(){chargerParametres();await charger();renderPage(currentPage);}
-chargerParametres();
+// ── RAPPORT PDF DU JOUR ──
+function exporterRapportPDF(){
+  const today=new Date().toLocaleDateString('fr-FR');
+  const ventesJour=S.ventes.filter(v=>v.date===today);
+  if(ventesJour.length===0){toast('⚠️ Aucune vente aujourd\'hui à exporter');return;}
+  const ca=ventesJour.reduce((s,v)=>s+v.total,0);
+  const bn=ventesJour.reduce((s,v)=>s+v.benef,0);
+  const ct=ventesJour.reduce((s,v)=>s+v.pa*v.qty,0);
+  const mg=ca>0?Math.round(bn/ca*100):0;
+  const dateFile=today.replace(/\//g,'-');
+  // Regroupement par gérant
+  const gerants=[...new Set(ventesJour.map(v=>v.employe).filter(Boolean))];
+  const perfGerant=gerants.map(nom=>{const vv=ventesJour.filter(v=>v.employe===nom);const empCa=vv.reduce((s,v)=>s+v.total,0);const empBn=vv.reduce((s,v)=>s+v.benef,0);return`<tr><td style="padding:6px 8px">${nom}</td><td style="padding:6px 8px;text-align:center">${vv.length}</td><td style="padding:6px 8px;text-align:right">${empCa.toLocaleString('fr-FR')} F</td><td style="padding:6px 8px;text-align:right;color:#007a5e">${empBn.toLocaleString('fr-FR')} F</td></tr>`;}).join('');
+  const lignes=ventesJour.map((v,i)=>`<tr style="border-bottom:1px solid #eee"><td style="padding:6px 8px;font-size:12px">${String(i+1).padStart(2,'0')}</td><td style="padding:6px 8px;font-size:12px;font-weight:600">${v.nom}</td><td style="padding:6px 8px;font-size:12px;text-align:center">${v.qty} ${v.unite||''}</td><td style="padding:6px 8px;font-size:12px;text-align:right">${v.pv.toLocaleString('fr-FR')} F</td><td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#007a5e">${v.total.toLocaleString('fr-FR')} F</td><td style="padding:6px 8px;font-size:12px;text-align:right;color:#888">${v.employe||'—'}</td><td style="padding:6px 8px;font-size:12px;text-align:right;color:#555">${v.client||'—'}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rapport du ${today}</title>
+  <style>body{font-family:Arial,sans-serif;padding:20px;color:#111;background:#fff}.header{text-align:center;margin-bottom:20px;border-bottom:2px solid #000;padding-bottom:12px}.shop{font-size:22px;font-weight:bold}.section{font-size:15px;font-weight:bold;margin:20px 0 8px;border-bottom:1px solid #ccc;padding-bottom:4px}table{width:100%;border-collapse:collapse}thead tr{background:#f0f0f0}th{padding:8px;font-size:11px;text-align:left;text-transform:uppercase}.totals{margin-top:16px;border-top:2px solid #000;padding-top:12px;display:flex;justify-content:flex-end;gap:30px}.tot-block{text-align:right}.tot-lbl{font-size:11px;color:#555;text-transform:uppercase}.tot-val{font-size:17px;font-weight:bold;color:#007a5e}.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.kpi-box{border:1px solid #ddd;border-radius:8px;padding:10px;text-align:center}.kpi-lbl{font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px}.kpi-v{font-size:17px;font-weight:bold;color:#111}.print-btn{text-align:center;margin-bottom:20px}.print-btn button{padding:10px 28px;font-size:14px;font-weight:bold;border:none;border-radius:8px;background:#007a5e;color:#fff;cursor:pointer}@media print{.print-btn{display:none}}</style></head><body>
+  <div class="print-btn"><button onclick="window.print()">🖨️ Imprimer / Sauvegarder PDF</button></div>
+  <div class="header"><div class="shop">🔧 Quincaillerie Khadija</div><div style="font-size:12px;color:#555;margin-top:4px">Patron: Pathé Fall · Rapport du ${today} · Généré le ${new Date().toLocaleString('fr-FR')}</div></div>
+  <div class="kpi-grid"><div class="kpi-box"><div class="kpi-lbl">Ventes</div><div class="kpi-v">${ventesJour.length}</div></div><div class="kpi-box"><div class="kpi-lbl">CA</div><div class="kpi-v">${ca.toLocaleString('fr-FR')} F</div></div><div class="kpi-box"><div class="kpi-lbl">Bénéfice</div><div class="kpi-v" style="color:#007a5e">${bn.toLocaleString('fr-FR')} F</div></div><div class="kpi-box"><div class="kpi-lbl">Marge</div><div class="kpi-v">${mg}%</div></div></div>
+  ${gerants.length>0?`<div class="section">👷 Performance par gérant</div><table><thead><tr><th>Gérant</th><th style="text-align:center">Ventes</th><th style="text-align:right">CA</th><th style="text-align:right">Bénéfice</th></tr></thead><tbody>${perfGerant}</tbody></table>`:''}
+  <div class="section">📋 Détail des ventes</div>
+  <table><thead><tr><th>#</th><th>Article</th><th>Quantité</th><th>Prix unit.</th><th>Total</th><th>Gérant</th><th>Client</th></tr></thead><tbody>${lignes}</tbody></table>
+  <div class="totals"><div class="tot-block"><div class="tot-lbl">Nb ventes</div><div class="tot-val" style="color:#333">${ventesJour.length}</div></div><div class="tot-block"><div class="tot-lbl">Coût marchandises</div><div class="tot-val" style="color:#c00">${ct.toLocaleString('fr-FR')} F</div></div><div class="tot-block"><div class="tot-lbl">Bénéfice</div><div class="tot-val" style="color:#e07a00">${bn.toLocaleString('fr-FR')} F</div></div><div class="tot-block"><div class="tot-lbl">Chiffre d'affaires</div><div class="tot-val">${ca.toLocaleString('fr-FR')} F</div></div></div>
+  </body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Rapport_${dateFile}_Pathe_Fall.html`;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast('⬇️ Rapport téléchargé — ouvre le fichier et imprime pour PDF');
+}
+
+async function init(){await charger();renderPage(currentPage);}
 if(sessionStorage.getItem(SESSION)==='1'){document.getElementById('login-screen').classList.add('hidden');init();}
 setInterval(async()=>{if(sessionStorage.getItem(SESSION)==='1'){await charger();renderPage(currentPage);}},30000);
 </script>
