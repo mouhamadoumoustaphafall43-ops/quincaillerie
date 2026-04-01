@@ -1272,7 +1272,7 @@ function collecterLignesRecu(){
   });
   return articles;
 }
-function genererRecu(){
+async function genererRecu(){
   const articles=collecterLignesRecu();
   if(articles.length===0){toast('⚠️ Ajoute au moins un article');return;}
   const client=document.getElementById('rc-client').value||'Client';
@@ -1283,15 +1283,50 @@ function genererRecu(){
   const sous=articles.reduce((s,a)=>s+a.total,0);
   const total=Math.round(sous*(1-remise/100));
   const recu={num,client,date,articles,remise,paiement,sous,total,employe:NOM,ts:new Date().toISOString()};
-  // Sauvegarder
+  // Sauvegarder reçu en local
   try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
   RECUS=RECUS.filter(r=>r.num!==num);
   RECUS.push(recu);
   localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
+
+  // ══ SYNC VERS VENTES SUPABASE ══
+  setSyncStatus('loading','💾 Sync ventes...');
+  try{
+    for(const art of articles){
+      const prod=S.produits.find(p=>p.nom===art.nom);
+      if(!prod)continue;
+      // Déduire stock
+      await sbPatch('produits',prod.id,{stock:Math.max(0,prod.stock-art.qty)});
+      // Enregistrer vente
+      await sbPost('ventes',{
+        produit_id:prod.id,
+        nom:prod.nom,
+        unite:prod.unite||'pièce',
+        qty:art.qty,
+        pv:art.prix,
+        pa:prod.achat,
+        total:art.total,
+        benef:(art.prix-prod.achat)*art.qty,
+        date,
+        ts:new Date().toISOString(),
+        client:client,
+        employe:NOM
+      });
+      // Mettre à jour stock local
+      prod.stock=Math.max(0,prod.stock-art.qty);
+    }
+    setSyncStatus('ok');
+    await charger();
+    renderPage(currentPage);
+    toast('✅ Reçu généré + ventes synchronisées — '+num);
+  }catch(e){
+    setSyncStatus('err');
+    toast('⚠️ Reçu sauvegardé mais erreur sync ventes: '+e.message);
+  }
+
   fermerModal('modal-recu');
   afficherRecu(num);
   renderRecus();
-  toast('✅ Reçu généré — '+num);
 }
 function genererEtImprimerRecu(){
   genererRecu();
@@ -1316,8 +1351,6 @@ function buildRecuHTML(recu){
     ${remiseL}
     <div class="rp-total-row"><span>TOTAL</span><span>${fmt(recu.total)}</span></div>
     <div class="rp-row" style="margin-top:4px"><span>Paiement:</span><span>${recu.paiement}</span></div>
-    <hr class="rp-sep">
-    <div class="rp-footer">${cfg.footer}</div>
   </div>`;
 }
 function afficherRecu(num){
