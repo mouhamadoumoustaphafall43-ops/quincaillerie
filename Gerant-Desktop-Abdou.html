@@ -694,6 +694,22 @@ textarea{resize:vertical;min-height:70px;}
 /* Ligne article reçu */
 .rc-ligne { display:grid; grid-template-columns:1fr 70px 90px 30px; gap:8px; align-items:center; margin-bottom:8px; }
 .rc-ligne input, .rc-ligne select { padding:7px 10px; font-size:12px; }
+
+/* Autocomplete article reçu */
+.ac-wrap { position:relative; }
+.ac-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:7px 30px 7px 10px; color:var(--text); font-size:12px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .15s; }
+.ac-input:focus { border-color:var(--accent); }
+.ac-clear { position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text3); font-size:14px; cursor:pointer; padding:0; line-height:1; display:none; }
+.ac-wrap.has-value .ac-clear { display:block; }
+.ac-dropdown { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; z-index:9999; max-height:220px; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+.ac-dropdown.open { display:block; }
+.ac-item { padding:9px 12px; font-size:12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(30,45,69,.4); }
+.ac-item:last-child { border-bottom:none; }
+.ac-item:hover, .ac-item.highlighted { background:rgba(0,200,150,.1); }
+.ac-item-nom { color:var(--text); font-weight:500; }
+.ac-item-prix { color:var(--accent); font-family:'DM Mono',monospace; font-size:11px; }
+.ac-item-stock { color:var(--text3); font-size:10px; margin-left:6px; }
+.ac-empty { padding:12px; font-size:12px; color:var(--text3); text-align:center; font-family:'DM Mono',monospace; }
 </style>
 
 <div class="toast" id="toast"></div>
@@ -1230,23 +1246,97 @@ function ouvrirNouveauRecu(){
   fermerModal('modal-recu');
   document.getElementById('modal-recu').classList.add('open');
 }
-function ajouterLigneRecu(){
+function ajouterLigneRecu(produitId, produitNom, prixInit){
   RECU_LINES++;
   const id='rl'+RECU_LINES;
   const div=document.createElement('div');
   div.className='rc-ligne';div.id=id;
-  const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}">${p.nom}</option>`).join('');
-  div.innerHTML=`<select onchange="onRecuProduit('${id}')">${opts}</select><input type="number" id="${id}-qty" value="1" min="1" oninput="calcRecu()" placeholder="Qté"><input type="number" id="${id}-prix" placeholder="Prix unit." oninput="calcRecu()"><button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
+  div.innerHTML=`
+    <div class="ac-wrap${produitNom?' has-value':''}" id="${id}-acwrap">
+      <input class="ac-input" id="${id}-search" type="text" placeholder="Rechercher article..." value="${produitNom||''}" autocomplete="off"
+        oninput="filtrerAcRecu('${id}')"
+        onfocus="ouvrirAcRecu('${id}')"
+        onkeydown="navAcRecu(event,'${id}')">
+      <button class="ac-clear" onclick="effacerAcRecu('${id}')">×</button>
+      <div class="ac-dropdown" id="${id}-drop"></div>
+      <input type="hidden" id="${id}-produit" value="${produitId||''}">
+    </div>
+    <input type="number" id="${id}-qty" value="1" min="1" oninput="calcRecu()" placeholder="Qté">
+    <input type="number" id="${id}-prix" value="${prixInit||''}" placeholder="Prix unit." oninput="calcRecu()">
+    <button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
   document.getElementById('rc-articles').appendChild(div);
+  // Fermer dropdown si clic ailleurs
+  document.addEventListener('click', function handler(e){
+    const wrap=document.getElementById(id+'-acwrap');
+    if(wrap&&!wrap.contains(e.target)){fermerAcRecu(id);}
+    else if(!wrap){document.removeEventListener('click',handler);}
+  });
 }
-function supprimerLigneRecu(id){const el=document.getElementById(id);if(el)el.remove();calcRecu();}
-function onRecuProduit(id){
-  const sel=document.querySelector('#'+id+' select');
-  const opt=sel.options[sel.selectedIndex];
-  const prix=opt.dataset.prix||0;
-  document.getElementById(id+'-prix').value=prix;
+
+function filtrerAcRecu(id){
+  const q=document.getElementById(id+'-search').value.toLowerCase().trim();
+  const wrap=document.getElementById(id+'-acwrap');
+  // Réinitialiser produit sélectionné si on retape
+  document.getElementById(id+'-produit').value='';
+  wrap.classList.remove('has-value');
+  document.getElementById(id+'-prix').value='';
+  afficherAcDropdown(id,q);
+}
+function ouvrirAcRecu(id){
+  const q=document.getElementById(id+'-search').value.toLowerCase().trim();
+  afficherAcDropdown(id,q);
+}
+function afficherAcDropdown(id,q){
+  const drop=document.getElementById(id+'-drop');
+  const prods=q?S.produits.filter(p=>p.nom.toLowerCase().includes(q)):S.produits.slice(0,12);
+  if(prods.length===0){
+    drop.innerHTML=`<div class="ac-empty">Aucun article trouvé</div>`;
+  } else {
+    drop.innerHTML=prods.map((p,i)=>`
+      <div class="ac-item" data-idx="${i}" onclick="selectionnerAcRecu('${id}','${p.id}','${p.nom.replace(/'/g,"\\'")}',${p.vente})">
+        <span class="ac-item-nom">${p.nom}${p.stock===0?` <span style="color:var(--red);font-size:10px">RUPTURE</span>`:''}</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          <span class="ac-item-stock">${p.stock} ${p.unite||''}</span>
+          <span class="ac-item-prix">${fmt(p.vente)}</span>
+        </span>
+      </div>`).join('');
+  }
+  drop.classList.add('open');
+}
+function fermerAcRecu(id){
+  const drop=document.getElementById(id+'-drop');
+  if(drop)drop.classList.remove('open');
+}
+function selectionnerAcRecu(id,pid,pnom,pprix){
+  document.getElementById(id+'-search').value=pnom;
+  document.getElementById(id+'-produit').value=pid;
+  document.getElementById(id+'-prix').value=pprix;
+  document.getElementById(id+'-acwrap').classList.add('has-value');
+  fermerAcRecu(id);
   calcRecu();
 }
+function effacerAcRecu(id){
+  document.getElementById(id+'-search').value='';
+  document.getElementById(id+'-produit').value='';
+  document.getElementById(id+'-prix').value='';
+  document.getElementById(id+'-acwrap').classList.remove('has-value');
+  fermerAcRecu(id);
+  calcRecu();
+}
+function navAcRecu(e,id){
+  const drop=document.getElementById(id+'-drop');
+  if(!drop.classList.contains('open'))return;
+  const items=drop.querySelectorAll('.ac-item');
+  const cur=drop.querySelector('.ac-item.highlighted');
+  let idx=cur?parseInt(cur.dataset.idx):-1;
+  if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);}
+  else if(e.key==='Enter'&&cur){e.preventDefault();cur.click();return;}
+  else if(e.key==='Escape'){fermerAcRecu(id);return;}
+  items.forEach(i=>i.classList.remove('highlighted'));
+  if(items[idx]){items[idx].classList.add('highlighted');items[idx].scrollIntoView({block:'nearest'});}
+}
+function supprimerLigneRecu(id){const el=document.getElementById(id);if(el)el.remove();calcRecu();}
 function calcRecu(){
   let sous=0;
   document.querySelectorAll('.rc-ligne').forEach(ligne=>{
@@ -1264,11 +1354,10 @@ function collecterLignesRecu(){
   const articles=[];
   document.querySelectorAll('.rc-ligne').forEach(ligne=>{
     const id=ligne.id;
-    const sel=ligne.querySelector('select');
     const qty=parseInt(document.getElementById(id+'-qty')?.value)||0;
     const prix=parseInt(document.getElementById(id+'-prix')?.value)||0;
-    const prodNom=sel.options[sel.selectedIndex]?.text||'';
-    if(qty>0&&prix>0&&prodNom&&prodNom!=='Choisir...')articles.push({nom:prodNom,qty,prix,total:qty*prix});
+    const prodNom=document.getElementById(id+'-search')?.value?.trim()||'';
+    if(qty>0&&prix>0&&prodNom)articles.push({nom:prodNom,qty,prix,total:qty*prix});
   });
   return articles;
 }
@@ -1401,13 +1490,12 @@ function syncRecuDepuisVentes(){
   RECU_LINES=0;
   // Ajouter une ligne par article
   Object.values(grouped).forEach(item=>{
-    RECU_LINES++;
-    const id='rl'+RECU_LINES;
-    const div=document.createElement('div');
-    div.className='rc-ligne';div.id=id;
-    const opts='<option value="">Choisir...</option>'+S.produits.map(p=>`<option value="${p.id}" data-prix="${p.vente}" ${p.nom===item.nom?'selected':''}>${p.nom}</option>`).join('');
-    div.innerHTML=`<select onchange="onRecuProduit('${id}')">${opts}</select><input type="number" id="${id}-qty" value="${item.qty}" min="1" oninput="calcRecu()" placeholder="Qté"><input type="number" id="${id}-prix" value="${item.prix}" placeholder="Prix unit." oninput="calcRecu()"><button onclick="supprimerLigneRecu('${id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px">×</button>`;
-    document.getElementById('rc-articles').appendChild(div);
+    const prod=S.produits.find(p=>p.nom===item.nom);
+    ajouterLigneRecu(prod?.id||'', item.nom, item.prix);
+    // Mettre à jour la quantité sur la dernière ligne créée
+    const lastId='rl'+RECU_LINES;
+    const qtyEl=document.getElementById(lastId+'-qty');
+    if(qtyEl)qtyEl.value=item.qty;
   });
   calcRecu();
   toast(`✅ ${Object.keys(grouped).length} article(s) importé(s) depuis les ventes du jour`);
