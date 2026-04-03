@@ -736,8 +736,15 @@ const SESSION  = 'qg_session';
 
 const H = {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
 async function sbGet(t,q=''){const r=await fetch(`${SUPA_URL}/rest/v1/${t}?${q}`,{headers:H});return r.json();}
-async function sbPost(t,d){const r=await fetch(`${SUPA_URL}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});return r.json();}
-async function sbPatch(t,id,d){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:H,body:JSON.stringify(d)});}
+async function sbPost(t,d){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${t}`,{method:'POST',headers:H,body:JSON.stringify(d)});
+  if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error(err.message||err.details||`HTTP ${r.status}`);}
+  return r.json();
+}
+async function sbPatch(t,id,d){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:H,body:JSON.stringify(d)});
+  if(!r.ok){const err=await r.json().catch(()=>({}));throw new Error(err.message||err.details||`HTTP ${r.status}`);}
+}
 async function sbDelete(t,id){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});}
 
 let S={produits:[],ventes:[],categories:[]};
@@ -1431,11 +1438,13 @@ async function genererRecu(){
         date,
         ts:new Date().toISOString(),
         client,
-        employe:NOM,
-        recu_num:num
+        employe:NOM
       });
       syncOk++;
-    }catch(e){console.warn('Sync vente échouée pour '+a.nom,e);}
+    }catch(e){
+      console.error('Sync vente échouée pour '+a.nom+':',e.message);
+      toast('❌ Erreur sync "'+a.nom+'": '+e.message);
+    }
   }
   await charger();
   setSyncStatus('ok');
@@ -1443,10 +1452,13 @@ async function genererRecu(){
   fermerModal('modal-recu');
   afficherRecu(num);
   renderRecus();
-  if(syncOk===articles.length){
-    toast(`✅ Reçu ${num} généré — ${syncOk} vente(s) synchronisées`);
+  const total_art=articles.length;
+  if(syncOk===total_art){
+    toast(`✅ Reçu ${num} — ${syncOk} vente(s) enregistrée(s) dans Supabase`);
+  }else if(syncOk===0){
+    toast(`❌ Reçu sauvegardé en local mais aucune vente synchronisée — vérifie la connexion`);
   }else{
-    toast(`✅ Reçu généré — ${syncOk}/${articles.length} ventes synchronisées`);
+    toast(`⚠️ Reçu généré — ${syncOk}/${total_art} ventes synchronisées`);
   }
 }
 async function genererEtImprimerRecu(){
