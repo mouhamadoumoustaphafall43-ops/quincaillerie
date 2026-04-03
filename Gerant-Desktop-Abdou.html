@@ -767,32 +767,150 @@ async function charger(){
     ]);
     S.produits=p||[];
     S.ventes=v||[];
-    S.categories=(c&&c[0])?c[0].liste:['Outillage','Plomberie','Électricité','Peinture','Maçonnerie','Serrurerie','Quincaillerie','Autre'];
-    // Remplacer Visserie par Maçonnerie dans la liste des catégories
-    S.categories=S.categories.map(cat=>cat==='Visserie'?'Maçonnerie':cat);
+    S.categories=(c&&c[0])?c[0].liste:['Outillage','Plomberie','Électricité','Peinture','Maçonnerie','Métallurgie','Quincaillerie','Autre'];
+    // Renommer anciennes catégories
+    S.categories=S.categories.map(cat=>cat==='Visserie'?'Maçonnerie':cat==='Serrurerie'?'Métallurgie':cat);
     setSyncStatus('ok');
 
     // Mettre à jour select catégorie stock
     const sel=document.getElementById('filtre-cat');
     sel.innerHTML='<option value="">Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
 
-    // Migration automatique Visserie → Maçonnerie sur les produits
-    const aRenommer=S.produits.filter(p=>p.cat==='Visserie');
-    if(aRenommer.length>0){
-      setSyncStatus('loading',`🔄 Migration ${aRenommer.length} produit(s)...`);
-      let ok=0;
-      for(const p of aRenommer){
-        try{await sbPatch('produits',p.id,{cat:'Maçonnerie'});p.cat='Maçonnerie';ok++;}
-        catch(e){console.warn('Erreur migration produit',p.nom,e);}
+    // ══ MIGRATIONS CATÉGORIES ══
+    const migrations=[{old:'Visserie',nw:'Maçonnerie'},{old:'Serrurerie',nw:'Métallurgie'}];
+    let totalMigres=0;
+    for(const m of migrations){
+      const aRenommer=S.produits.filter(p=>p.cat===m.old);
+      if(aRenommer.length>0){
+        setSyncStatus('loading',`🔄 Migration ${aRenommer.length} produit(s) ${m.old}→${m.nw}...`);
+        for(const p of aRenommer){
+          try{await sbPatch('produits',p.id,{cat:m.nw});p.cat=m.nw;totalMigres++;}
+          catch(e){console.warn('Erreur migration',p.nom,e);}
+        }
       }
-      // Mettre à jour la table catégories si elle contient Visserie
-      if(c&&c[0]&&c[0].liste){
-        const newListe=c[0].liste.map(x=>x==='Visserie'?'Maçonnerie':x);
-        try{await fetch(`${SUPA_URL}/rest/v1/categories?id=eq.${c[0].id}`,{method:'PATCH',headers:H,body:JSON.stringify({liste:newListe})});}
-        catch(e){console.warn('Erreur mise à jour table catégories',e);}
+    }
+    // Mettre à jour la table catégories
+    if(c&&c[0]&&c[0].liste){
+      const newListe=c[0].liste.map(x=>x==='Visserie'?'Maçonnerie':x==='Serrurerie'?'Métallurgie':x);
+      try{await fetch(`${SUPA_URL}/rest/v1/categories?id=eq.${c[0].id}`,{method:'PATCH',headers:H,body:JSON.stringify({liste:newListe})});}
+      catch(e){console.warn('Erreur màj catégories',e);}
+    }
+    if(totalMigres>0){setSyncStatus('ok');toast(`✅ ${totalMigres} produit(s) migrés`);}
+
+    // ══ AJOUT OUTILS PAR MÉTIER (une seule fois) ══
+    const OUTILS_KEY='outils_metier_ajoutes_v1';
+    if(!localStorage.getItem(OUTILS_KEY)){
+      const nomsExistants=new Set(S.produits.map(p=>p.nom.toLowerCase()));
+      const outils=[
+        // MAÇONNERIE
+        {nom:'Truelle',cat:'Outillage',unite:'pièce',achat:1500,vente:2500,seuil:5,stock:10,description:'Maçonnerie'},
+        {nom:'Taloche',cat:'Outillage',unite:'pièce',achat:2000,vente:3500,seuil:3,stock:8,description:'Maçonnerie'},
+        {nom:'Règle de maçon',cat:'Outillage',unite:'pièce',achat:3000,vente:5000,seuil:3,stock:5,description:'Maçonnerie'},
+        {nom:'Niveau à bulle',cat:'Outillage',unite:'pièce',achat:4000,vente:7000,seuil:3,stock:6,description:'Maçonnerie / Plomberie'},
+        {nom:'Fil à plomb',cat:'Outillage',unite:'pièce',achat:1000,vente:2000,seuil:5,stock:10,description:'Maçonnerie'},
+        {nom:'Marteau de maçon',cat:'Outillage',unite:'pièce',achat:3500,vente:6000,seuil:3,stock:8,description:'Maçonnerie'},
+        {nom:'Burin de maçon',cat:'Outillage',unite:'pièce',achat:1500,vente:2500,seuil:5,stock:10,description:'Maçonnerie'},
+        {nom:'Masse 3kg',cat:'Outillage',unite:'pièce',achat:5000,vente:8500,seuil:3,stock:5,description:'Maçonnerie'},
+        {nom:'Masse 5kg',cat:'Outillage',unite:'pièce',achat:7000,vente:12000,seuil:2,stock:4,description:'Maçonnerie'},
+        {nom:'Seau de maçon',cat:'Outillage',unite:'pièce',achat:1000,vente:1800,seuil:5,stock:15,description:'Maçonnerie'},
+        {nom:'Brouette',cat:'Outillage',unite:'pièce',achat:25000,vente:40000,seuil:2,stock:3,description:'Maçonnerie'},
+        {nom:'Pelle ronde',cat:'Outillage',unite:'pièce',achat:4000,vente:7000,seuil:3,stock:8,description:'Maçonnerie'},
+        {nom:'Pelle carrée',cat:'Outillage',unite:'pièce',achat:4000,vente:7000,seuil:3,stock:8,description:'Maçonnerie'},
+        {nom:'Pioche',cat:'Outillage',unite:'pièce',achat:6000,vente:10000,seuil:3,stock:5,description:'Maçonnerie'},
+        {nom:'Bétonnière électrique',cat:'Outillage',unite:'pièce',achat:120000,vente:180000,seuil:1,stock:2,description:'Maçonnerie'},
+        {nom:'Spatule de maçon',cat:'Outillage',unite:'pièce',achat:1000,vente:1800,seuil:5,stock:12,description:'Maçonnerie'},
+        {nom:'Lisseuse inox',cat:'Outillage',unite:'pièce',achat:2500,vente:4500,seuil:3,stock:6,description:'Maçonnerie'},
+        {nom:'Grattoir de façade',cat:'Outillage',unite:'pièce',achat:2000,vente:3500,seuil:3,stock:6,description:'Maçonnerie'},
+        // PLOMBERIE
+        {nom:'Clé à molette',cat:'Outillage',unite:'pièce',achat:3000,vente:5500,seuil:5,stock:10,description:'Plomberie'},
+        {nom:'Clé de robinet',cat:'Outillage',unite:'pièce',achat:2500,vente:4500,seuil:5,stock:10,description:'Plomberie'},
+        {nom:'Coupe-tube cuivre',cat:'Outillage',unite:'pièce',achat:5000,vente:9000,seuil:3,stock:5,description:'Plomberie'},
+        {nom:'Coupe-tube PVC',cat:'Outillage',unite:'pièce',achat:6000,vente:10000,seuil:3,stock:5,description:'Plomberie'},
+        {nom:'Chalumeau soudure',cat:'Outillage',unite:'pièce',achat:15000,vente:25000,seuil:2,stock:3,description:'Plomberie'},
+        {nom:'Débouche-canalisation',cat:'Outillage',unite:'pièce',achat:3000,vente:5500,seuil:3,stock:6,description:'Plomberie'},
+        {nom:'Ventouse de plombier',cat:'Outillage',unite:'pièce',achat:2000,vente:3500,seuil:5,stock:8,description:'Plomberie'},
+        {nom:'Furet de canalisation',cat:'Outillage',unite:'pièce',achat:8000,vente:14000,seuil:2,stock:4,description:'Plomberie'},
+        {nom:'Cintreuse de tube',cat:'Outillage',unite:'pièce',achat:12000,vente:20000,seuil:2,stock:3,description:'Plomberie'},
+        {nom:'Filière à tuyau',cat:'Outillage',unite:'pièce',achat:20000,vente:35000,seuil:1,stock:2,description:'Plomberie'},
+        {nom:'Clé sangle',cat:'Outillage',unite:'pièce',achat:4000,vente:7000,seuil:3,stock:6,description:'Plomberie'},
+        {nom:'Détecteur de fuite',cat:'Outillage',unite:'pièce',achat:25000,vente:42000,seuil:1,stock:2,description:'Plomberie'},
+        // ÉLECTRICITÉ
+        {nom:'Tournevis testeur de phase',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:15,description:'Électricité'},
+        {nom:'Pince à dénuder',cat:'Outillage',unite:'pièce',achat:3500,vente:6000,seuil:5,stock:10,description:'Électricité'},
+        {nom:'Pince ampèremétrique',cat:'Outillage',unite:'pièce',achat:20000,vente:35000,seuil:2,stock:3,description:'Électricité'},
+        {nom:'Multimètre',cat:'Outillage',unite:'pièce',achat:15000,vente:25000,seuil:2,stock:4,description:'Électricité'},
+        {nom:'Pince coupante',cat:'Outillage',unite:'pièce',achat:3000,vente:5500,seuil:5,stock:10,description:'Électricité'},
+        {nom:'Pince universelle',cat:'Outillage',unite:'pièce',achat:3500,vente:6000,seuil:5,stock:10,description:'Électricité'},
+        {nom:'Tournevis plat isolé',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:15,description:'Électricité'},
+        {nom:'Tournevis cruciforme isolé',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:15,description:'Électricité'},
+        {nom:'Perceuse électrique',cat:'Outillage',unite:'pièce',achat:35000,vente:58000,seuil:2,stock:3,description:'Électricité / Maçonnerie'},
+        {nom:'Foreuse / Perforateur',cat:'Outillage',unite:'pièce',achat:60000,vente:95000,seuil:1,stock:2,description:'Électricité / Maçonnerie'},
+        {nom:'Scie sauteuse',cat:'Outillage',unite:'pièce',achat:40000,vente:65000,seuil:1,stock:2,description:'Électricité'},
+        {nom:'Lampe de chantier',cat:'Outillage',unite:'pièce',achat:8000,vente:14000,seuil:3,stock:5,description:'Électricité'},
+        {nom:'Prolongateur 10m',cat:'Outillage',unite:'pièce',achat:6000,vente:10000,seuil:3,stock:6,description:'Électricité'},
+        {nom:'Testeur de réseau électrique',cat:'Outillage',unite:'pièce',achat:12000,vente:20000,seuil:2,stock:3,description:'Électricité'},
+        // MÉTALLURGIE
+        {nom:'Meuleuse angulaire',cat:'Outillage',unite:'pièce',achat:45000,vente:75000,seuil:2,stock:3,description:'Métallurgie'},
+        {nom:'Disque à tronçonner métal',cat:'Outillage',unite:'pièce',achat:800,vente:1500,seuil:10,stock:30,description:'Métallurgie'},
+        {nom:'Disque à meuler',cat:'Outillage',unite:'pièce',achat:800,vente:1500,seuil:10,stock:30,description:'Métallurgie'},
+        {nom:'Poste à souder',cat:'Outillage',unite:'pièce',achat:120000,vente:195000,seuil:1,stock:2,description:'Métallurgie'},
+        {nom:'Masque de soudeur',cat:'Outillage',unite:'pièce',achat:8000,vente:14000,seuil:3,stock:5,description:'Métallurgie'},
+        {nom:'Gants de soudeur',cat:'Outillage',unite:'pièce',achat:3000,vente:5500,seuil:5,stock:10,description:'Métallurgie'},
+        {nom:'Marteau de forgeron',cat:'Outillage',unite:'pièce',achat:8000,vente:14000,seuil:3,stock:5,description:'Métallurgie'},
+        {nom:"Étau d'établi",cat:'Outillage',unite:'pièce',achat:30000,vente:50000,seuil:1,stock:2,description:'Métallurgie'},
+        {nom:'Lime plate',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:12,description:'Métallurgie'},
+        {nom:'Lime ronde',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:12,description:'Métallurgie'},
+        {nom:'Perceuse à colonne',cat:'Outillage',unite:'pièce',achat:95000,vente:155000,seuil:1,stock:1,description:'Métallurgie'},
+        {nom:'Foret métal HSS 6mm',cat:'Outillage',unite:'pièce',achat:500,vente:1000,seuil:10,stock:20,description:'Métallurgie'},
+        {nom:'Foret métal HSS 10mm',cat:'Outillage',unite:'pièce',achat:800,vente:1500,seuil:10,stock:20,description:'Métallurgie'},
+        {nom:'Scie à métaux',cat:'Outillage',unite:'pièce',achat:5000,vente:9000,seuil:3,stock:6,description:'Métallurgie'},
+        {nom:'Lame scie à métaux',cat:'Outillage',unite:'pièce',achat:500,vente:900,seuil:10,stock:30,description:'Métallurgie'},
+        {nom:'Taraud et filière métal',cat:'Outillage',unite:'pièce',achat:8000,vente:14000,seuil:2,stock:4,description:'Métallurgie'},
+        // PEINTURE
+        {nom:'Rouleau à peinture 22cm',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:15,description:'Peinture'},
+        {nom:'Manchon rouleau 22cm',cat:'Outillage',unite:'pièce',achat:800,vente:1500,seuil:10,stock:20,description:'Peinture'},
+        {nom:'Pinceau plat 50mm',cat:'Outillage',unite:'pièce',achat:800,vente:1500,seuil:10,stock:20,description:'Peinture'},
+        {nom:'Pinceau plat 80mm',cat:'Outillage',unite:'pièce',achat:1200,vente:2200,seuil:10,stock:15,description:'Peinture'},
+        {nom:'Pinceau queue de morue',cat:'Outillage',unite:'pièce',achat:2000,vente:3500,seuil:5,stock:10,description:'Peinture'},
+        {nom:'Bac à peinture',cat:'Outillage',unite:'pièce',achat:1000,vente:1800,seuil:5,stock:12,description:'Peinture'},
+        {nom:'Perche télescopique',cat:'Outillage',unite:'pièce',achat:5000,vente:9000,seuil:3,stock:6,description:'Peinture'},
+        {nom:'Pistolet à peinture',cat:'Outillage',unite:'pièce',achat:25000,vente:42000,seuil:2,stock:3,description:'Peinture'},
+        {nom:"Compresseur d'air",cat:'Outillage',unite:'pièce',achat:80000,vente:130000,seuil:1,stock:2,description:'Peinture / Métallurgie'},
+        {nom:'Spatule de peintre 10cm',cat:'Outillage',unite:'pièce',achat:800,vente:1500,seuil:10,stock:20,description:'Peinture'},
+        {nom:'Spatule de peintre 20cm',cat:'Outillage',unite:'pièce',achat:1200,vente:2200,seuil:5,stock:12,description:'Peinture'},
+        {nom:'Grattoir de peintre',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:10,description:'Peinture'},
+        {nom:'Masque anti-poussière',cat:'Outillage',unite:'pièce',achat:500,vente:1000,seuil:10,stock:30,description:'Peinture / Maçonnerie'},
+        {nom:'Lunettes de protection',cat:'Outillage',unite:'pièce',achat:1000,vente:1800,seuil:5,stock:15,description:'Tous métiers'},
+        {nom:'Gants de travail',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:10,stock:25,description:'Tous métiers'},
+        {nom:'Casque de chantier',cat:'Outillage',unite:'pièce',achat:5000,vente:8500,seuil:5,stock:10,description:'Tous métiers'},
+        {nom:'Ceinture porte-outils',cat:'Outillage',unite:'pièce',achat:4000,vente:7000,seuil:3,stock:6,description:'Tous métiers'},
+        {nom:'Mètre ruban 5m',cat:'Outillage',unite:'pièce',achat:1500,vente:2800,seuil:5,stock:15,description:'Tous métiers'},
+        {nom:'Mètre ruban 10m',cat:'Outillage',unite:'pièce',achat:2500,vente:4500,seuil:3,stock:8,description:'Tous métiers'},
+        {nom:'Équerre de traçage',cat:'Outillage',unite:'pièce',achat:2000,vente:3500,seuil:3,stock:8,description:'Tous métiers'},
+        {nom:'Crayon de charpentier',cat:'Outillage',unite:'pièce',achat:200,vente:400,seuil:20,stock:50,description:'Tous métiers'},
+        {nom:'Cordeau traceur',cat:'Outillage',unite:'pièce',achat:2000,vente:3500,seuil:3,stock:6,description:'Maçonnerie / Plomberie'},
+      ];
+      // Filtrer ceux qui n'existent pas déjà
+      const aAjouter=outils.filter(o=>!nomsExistants.has(o.nom.toLowerCase()));
+      if(aAjouter.length>0){
+        setSyncStatus('loading',`🔄 Ajout ${aAjouter.length} outils...`);
+        let added=0;
+        const today=new Date().toLocaleDateString('fr-FR');
+        for(const o of aAjouter){
+          try{
+            await sbPost('produits',{...o,date_ajout:today,four:''});
+            added++;
+          }catch(e){console.warn('Erreur ajout outil',o.nom,e.message);}
+        }
+        localStorage.setItem(OUTILS_KEY,'1');
+        setSyncStatus('ok');
+        toast(`✅ ${added} outils ajoutés dans Outillage`);
+        // Recharger les produits
+        const fresh=await sbGet('produits','order=nom');
+        S.produits=fresh||[];
+      } else {
+        localStorage.setItem(OUTILS_KEY,'1');
       }
-      setSyncStatus('ok');
-      if(ok>0)toast(`✅ ${ok} produit(s) migrés : Visserie → Maçonnerie`);
     }
   }catch(e){setSyncStatus('err');toast('❌ Erreur connexion Supabase');}
 }
