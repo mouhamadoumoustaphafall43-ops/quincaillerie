@@ -779,9 +779,11 @@ async function charger(){
     S.categories=S.categories.map(cat=>cat==='Visserie'?'Maçonnerie':cat==='Serrurerie'?'Métallurgie':cat);
     setSyncStatus('ok');
 
-    // Mettre à jour select catégorie stock
+    // Mettre à jour select catégorie stock en préservant la valeur sélectionnée
     const sel=document.getElementById('filtre-cat');
+    const catActuelle=sel?sel.value:'';
     sel.innerHTML='<option value="">Toutes catégories</option>'+S.categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if(catActuelle)sel.value=catActuelle;
 
     // Migration automatique Visserie → Maçonnerie et Serrurerie → Métallurgie sur les produits
     const aRenommer=S.produits.filter(p=>p.cat==='Visserie'||p.cat==='Serrurerie');
