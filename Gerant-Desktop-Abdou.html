@@ -846,9 +846,9 @@ function renderDashboard(){
   const mg=ca>0?Math.round(bn/ca*100):0;
   const rupt=S.produits.filter(p=>p.stock===0).length;
 
-  document.getElementById('kpi-vj').textContent=fmtK(ca);
+  document.getElementById('kpi-vj').textContent=fmt(ca);
   document.getElementById('kpi-nb-vj').textContent=mesV.length+' ventes';
-  document.getElementById('kpi-bn').textContent=fmtK(bn);
+  document.getElementById('kpi-bn').textContent=fmt(bn);
   document.getElementById('kpi-mg').textContent=`marge ${mg}%`;
   document.getElementById('kpi-rupt').textContent=rupt;
   document.getElementById('kpi-dispo').textContent=S.produits.filter(p=>p.stock>0).length;
@@ -871,7 +871,7 @@ function renderDashboard(){
   // Top produits
   const topM={};S.ventes.filter(v=>v.employe===NOM).forEach(v=>{topM[v.nom]=(topM[v.nom]||0)+v.total;});
   const top=Object.entries(topM).sort((a,b)=>b[1]-a[1]).slice(0,5);const mxT=top[0]?.[1]||1;
-  document.getElementById('dash-top').innerHTML=top.length===0?'<div class="empty" style="padding:12px">Aucune donnée</div>':top.map(([n,v])=>`<div class="pw"><div class="ph"><span class="pl">${n}</span><span class="pv">${fmtK(v)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(v/mxT*100)}%;background:var(--accent)"></div></div></div>`).join('');
+  document.getElementById('dash-top').innerHTML=top.length===0?'<div class="empty" style="padding:12px">Aucune donnée</div>':top.map(([n,v])=>`<div class="pw"><div class="ph"><span class="pl">${n}</span><span class="pv">${fmt(v)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(v/mxT*100)}%;background:var(--accent)"></div></div></div>`).join('');
 }
 
 // ══ VENTES ══
