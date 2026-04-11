@@ -723,6 +723,10 @@ textarea{resize:vertical;min-height:70px;}
         <span class="ib-lbl">Remise (%)</span>
         <input type="number" id="rc-remise" value="0" min="0" max="100" oninput="calcRecu()" style="width:80px;padding:4px 8px;font-size:12px;text-align:right">
       </div>
+      <div class="ib-row">
+        <span class="ib-lbl">Frais de transport (F)</span>
+        <input type="number" id="rc-transport" value="0" min="0" oninput="calcRecu()" style="width:100px;padding:4px 8px;font-size:12px;text-align:right">
+      </div>
       <div class="ib-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px">
         <span style="font-weight:700;color:var(--text);font-family:'DM Mono',monospace">TOTAL</span>
         <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)" id="rc-total">0 F</span>
@@ -1657,11 +1661,8 @@ async function genererRecu(){
   let syncOk=0;
 
   if(estDepuisVentes){
-    // ══ MODE IMPORT VENTES : juste rattacher le recu_num aux ventes existantes (pas de doublon) ══
-    for(const id of ventesSourceIds){
-      try{await sbPatch('ventes',id,{recu_num:num});syncOk++;}catch(e){}
-    }
-    toast(`✅ Reçu ${num} lié à ${syncOk} vente(s) existante(s) — aucun doublon`);
+    // ══ MODE IMPORT VENTES : reçu créé depuis ventes existantes, pas de doublon stock/ventes ══
+    toast(`✅ Reçu ${num} généré depuis les ventes du jour`);
   } else if(estEdition){
     // ══ MODE ÉDITION : ajuster le stock article par article (diff ancien vs nouveau) ══
     if(ancienRecu){
@@ -1673,13 +1674,11 @@ async function genererRecu(){
           try{await sbPatch('produits',p.id,{stock:newStock});p.stock=newStock;}catch(e){}
         }
       }
-      // Supprimer UNIQUEMENT les ventes liées à CE reçu via recu_num
-      try{
-        const vOld=await sbGet('ventes',`recu_num=eq.${encodeURIComponent(ancienRecu.num)}&employe=eq.${encodeURIComponent(NOM)}`);
-        for(const v of (vOld||[])){try{await sbDelete('ventes',v.id);}catch(e){}}
-      }catch(e){}
+      // Supprimer les ventes de la même date/client/employe liées à cet ancien reçu
+      const vOld=S.ventes.filter(v=>v.employe===NOM&&v.date===ancienRecu.date&&v.client===(ancienRecu.client||'Client'));
+      for(const v of vOld){try{await sbDelete('ventes',v.id);}catch(e){}}
     }
-    // Appliquer le nouveau stock et créer les nouvelles ventes avec recu_num
+    // Appliquer le nouveau stock et créer les nouvelles ventes
     for(const a of articles){
       try{
         const p=S.produits.find(x=>x.nom===a.nom);
@@ -1689,13 +1688,13 @@ async function genererRecu(){
           await sbPatch('produits',p.id,{stock:newStock});
           p.stock=newStock;
         }
-        await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM,recu_num:num});
+        await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM});
         syncOk++;
       }catch(e){toast('❌ Erreur sync "'+a.nom+'": '+e.message);}
     }
     toast(`✅ Reçu ${num} modifié — stock et ventes mis à jour`);
   } else {
-    // ══ MODE CRÉATION : déduire le stock et créer les ventes avec recu_num ══
+    // ══ MODE CRÉATION : déduire le stock et créer les ventes ══
     for(const a of articles){
       try{
         const p=S.produits.find(x=>x.nom===a.nom);
@@ -1703,9 +1702,9 @@ async function genererRecu(){
         if(p){
           const newStock=Math.max(0,p.stock-a.qty);
           await sbPatch('produits',p.id,{stock:newStock});
-          p.stock=newStock; // mise à jour locale pour éviter doublons dans la boucle
+          p.stock=newStock;
         }
-        await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM,recu_num:num});
+        await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM});
         syncOk++;
       }catch(e){toast('❌ Erreur sync "'+a.nom+'": '+e.message);}
     }
@@ -1727,6 +1726,9 @@ function buildRecuHTML(recu){
   const cfg=PRINTER_CONFIG;
   const lignes=recu.articles.map(a=>`<div class="rp-row"><span>${a.nom} x${a.qty}</span><span>${fmt(a.total)}</span></div>`).join('');
   const remiseL=recu.remise>0?`<div class="rp-row"><span>Remise ${recu.remise}%</span><span>-${fmt(recu.sous-recu.total)}</span></div>`:'';
+  const transport=recu.transport||0;
+  const transportL=transport>0?`<div class="rp-row"><span>Frais de transport</span><span>${fmt(transport)}</span></div>`:'';
+  const totalFinal=recu.total+transport;
   return`<div class="recu-print">
     <div class="rp-title">🔧 ${cfg.boutique}</div>
     ${cfg.adresse?`<div class="rp-sub">${cfg.adresse}</div>`:''}
@@ -1740,7 +1742,8 @@ function buildRecuHTML(recu){
     ${lignes}
     <hr class="rp-sep">
     ${remiseL}
-    <div class="rp-total-row"><span>TOTAL</span><span>${fmt(recu.total)}</span></div>
+    ${transportL}
+    <div class="rp-total-row"><span>TOTAL</span><span>${fmt(totalFinal)}</span></div>
     <div class="rp-row" style="margin-top:4px"><span>Paiement:</span><span>${recu.paiement}</span></div>
     <hr class="rp-sep">
     <div class="rp-footer">${cfg.footer}</div>
