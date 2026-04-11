@@ -1482,6 +1482,7 @@ function filtrerRecus(v){renderRecus(v);}
 function ouvrirNouveauRecu(){
   RECU_LINES=0;
   RECU_EN_EDITION=null;
+  RECU_DEPUIS_VENTES=false;
   document.getElementById('rc-articles').innerHTML='';
   const num='REC-'+Date.now().toString(36).toUpperCase();
   document.getElementById('rc-num').value=num;
@@ -1647,12 +1648,21 @@ async function genererRecu(){
   localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
 
   const estEdition = RECU_EN_EDITION !== null;
+  const estDepuisVentes = !estEdition && Array.isArray(RECU_DEPUIS_VENTES) && RECU_DEPUIS_VENTES.length > 0;
   RECU_EN_EDITION = null;
+  const ventesSourceIds = estDepuisVentes ? RECU_DEPUIS_VENTES.flatMap(g=>g.ids) : [];
+  RECU_DEPUIS_VENTES = false;
 
   setSyncStatus('loading','💾 Sync ventes...');
   let syncOk=0;
 
-  if(estEdition){
+  if(estDepuisVentes){
+    // ══ MODE IMPORT VENTES : juste rattacher le recu_num aux ventes existantes (pas de doublon) ══
+    for(const id of ventesSourceIds){
+      try{await sbPatch('ventes',id,{recu_num:num});syncOk++;}catch(e){}
+    }
+    toast(`✅ Reçu ${num} lié à ${syncOk} vente(s) existante(s) — aucun doublon`);
+  } else if(estEdition){
     // ══ MODE ÉDITION : ajuster le stock article par article (diff ancien vs nouveau) ══
     if(ancienRecu){
       // Remettre le stock des anciens articles
@@ -1690,7 +1700,11 @@ async function genererRecu(){
       try{
         const p=S.produits.find(x=>x.nom===a.nom);
         const pa=p?p.achat:0;
-        if(p){await sbPatch('produits',p.id,{stock:Math.max(0,p.stock-a.qty)});}
+        if(p){
+          const newStock=Math.max(0,p.stock-a.qty);
+          await sbPatch('produits',p.id,{stock:newStock});
+          p.stock=newStock; // mise à jour locale pour éviter doublons dans la boucle
+        }
         await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM,recu_num:num});
         syncOk++;
       }catch(e){toast('❌ Erreur sync "'+a.nom+'": '+e.message);}
@@ -1763,21 +1777,25 @@ function supprimerRecu(num){
 }
 
 // ══ SYNC REÇU DEPUIS VENTES DU JOUR ══
+let RECU_DEPUIS_VENTES = false; // flag pour savoir si le reçu vient d'un import ventes
+
 function syncRecuDepuisVentes(){
   const today=new Date().toLocaleDateString('fr-FR');
-  const ventesJour=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
-  if(ventesJour.length===0){toast('⚠️ Aucune vente enregistrée aujourd\'hui');return;}
+  const ventesJour=S.ventes.filter(v=>v.date===today&&v.employe===NOM&&!v.recu_num); // exclure celles déjà liées à un reçu
+  if(ventesJour.length===0){toast('⚠️ Aucune vente libre enregistrée aujourd\'hui (toutes déjà liées à un reçu)');return;}
   // Regrouper par article
   const grouped={};
   ventesJour.forEach(v=>{
-    if(!grouped[v.nom])grouped[v.nom]={nom:v.nom,qty:0,prix:v.pv,total:0};
+    if(!grouped[v.nom])grouped[v.nom]={nom:v.nom,qty:0,prix:v.pv,total:0,ids:[]};
     grouped[v.nom].qty+=v.qty;
     grouped[v.nom].total+=v.total;
     grouped[v.nom].prix=Math.round(grouped[v.nom].total/grouped[v.nom].qty);
+    grouped[v.nom].ids.push(v.id);
   });
   // Vider les lignes existantes
   document.getElementById('rc-articles').innerHTML='';
   RECU_LINES=0;
+  RECU_DEPUIS_VENTES = Object.values(grouped).map(g=>({...g})); // sauvegarder les données ventes sources
   // Ajouter une ligne par article avec le nouveau système
   Object.values(grouped).forEach(item=>{
     ajouterLigneRecu({nom:item.nom,qty:item.qty,prix:item.prix});
@@ -1802,7 +1820,13 @@ function exporterVentesJourPDF(source){
   if(ventesJour.length===0){toast(`⚠️ Aucune vente le ${dateChoisie}`);return;}
   const ca=ventesJour.reduce((s,v)=>s+v.total,0);
   const bn=ventesJour.reduce((s,v)=>s+v.benef,0);
-  // Frais transport — déduits du bénéfice interne mais PAS sur la facture client
+  // Frais transport du jour
+  const transports=getTransports();
+  const today2=new Date().toLocaleDateString('fr-FR');
+  const totalTransport=transports.filter(t=>t.date===dateChoisie).reduce((s,t)=>s+t.montant,0);
+  const benefNet=bn-totalTransport;
+  const transportLine=totalTransport>0?`<div class="tot-block"><div class="tot-lbl">Frais transport</div><div class="tot-val" style="color:#e05020">-${fmt(totalTransport)}</div></div>`:'';
+  const benefNetLine=totalTransport>0?`<div class="tot-block"><div class="tot-lbl">Bénéfice net</div><div class="tot-val" style="color:#007a5e">${fmt(Math.max(0,benefNet))}</div></div>`:'';
   const cfg=PRINTER_CONFIG;
   const dateFile=dateChoisie.replace(/\//g,'-');
   const lignes=ventesJour.map((v,i)=>`
