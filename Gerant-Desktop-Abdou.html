@@ -887,7 +887,7 @@ async function sbPatch(t,id,d){
 }
 async function sbDelete(t,id){await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:H});}
 
-let S={produits:[],ventes:[],categories:[]};
+let S={produits:[],ventes:[],categories:[],transports:[]};
 let currentPage='dashboard';
 
 function setSyncStatus(s,msg=''){
@@ -900,13 +900,15 @@ function setSyncStatus(s,msg=''){
 async function charger(){
   setSyncStatus('loading');
   try{
-    const[p,v,c]=await Promise.all([
+    const[p,v,c,tr]=await Promise.all([
       sbGet('produits','order=nom'),
       sbGet('ventes','order=created_at.desc&limit=200'),
       sbGet('categories','limit=1'),
+      sbGet('transports','order=ts.desc&limit=200'),
     ]);
     S.produits=p||[];
     S.ventes=v||[];
+    S.transports=tr||[];
     S.categories=(c&&c[0])?c[0].liste:['Outillage','Plomberie','Électricité','Peinture','Maçonnerie','Métallurgie','Quincaillerie','Autre'];
     // Remplacer Visserie par Maçonnerie et Serrurerie par Métallurgie
     S.categories=S.categories.map(cat=>cat==='Visserie'?'Maçonnerie':cat==='Serrurerie'?'Métallurgie':cat);
@@ -1824,9 +1826,7 @@ function exporterVentesJourPDF(source){
   const ca=ventesJour.reduce((s,v)=>s+v.total,0);
   const bn=ventesJour.reduce((s,v)=>s+v.benef,0);
   // Frais transport du jour
-  const transports=getTransports();
-  const today2=new Date().toLocaleDateString('fr-FR');
-  const totalTransport=transports.filter(t=>t.date===dateChoisie).reduce((s,t)=>s+t.montant,0);
+  const totalTransport=(S.transports||[]).filter(t=>t.employe===NOM&&t.date===dateChoisie).reduce((s,t)=>s+t.montant,0);
   const benefNet=bn-totalTransport;
   const transportLine=totalTransport>0?`<div class="tot-block"><div class="tot-lbl">Frais transport</div><div class="tot-val" style="color:#e05020">-${fmt(totalTransport)}</div></div>`:'';
   const benefNetLine=totalTransport>0?`<div class="tot-block"><div class="tot-lbl">Bénéfice net</div><div class="tot-val" style="color:#007a5e">${fmt(Math.max(0,benefNet))}</div></div>`:'';
@@ -2277,14 +2277,7 @@ function supprimerFacture(num){
 
 function filtrerFactures(v){renderFactures(v);}
 
-// ══ FRAIS DE TRANSPORT ══
-function getTransports(){
-  try{return JSON.parse(localStorage.getItem('transports_'+NOM)||'[]');}catch(e){return[];}
-}
-function saveTransports(list){
-  localStorage.setItem('transports_'+NOM,JSON.stringify(list));
-}
-
+// ══ FRAIS DE TRANSPORT (Supabase) ══
 function ouvrirModalTransport(){
   document.getElementById('tr-montant').value='';
   document.getElementById('tr-desc').value='';
@@ -2293,53 +2286,54 @@ function ouvrirModalTransport(){
   setTimeout(()=>document.getElementById('tr-montant').focus(),100);
 }
 
-function ajouterTransport(){
+async function ajouterTransport(){
   const montant=parseInt(document.getElementById('tr-montant').value)||0;
   const desc=document.getElementById('tr-desc').value.trim()||'Transport';
   const date=document.getElementById('tr-date').value||new Date().toLocaleDateString('fr-FR');
   if(montant<=0){toast('⚠️ Entrez un montant valide');return;}
-  const list=getTransports();
-  list.push({id:Date.now().toString(36),montant,desc,date,employe:NOM,ts:new Date().toISOString()});
-  saveTransports(list);
-  fermerModal('modal-transport');
-  toast(`✅ Frais de ${fmt(montant)} enregistré`);
-  renderTransport();
-  renderDashboard(); // mettre à jour le bénéfice net
+  try{
+    await sbPost('transports',{montant,description:desc,date,employe:NOM,ts:new Date().toISOString()});
+    fermerModal('modal-transport');
+    toast(`✅ Frais de ${fmt(montant)} enregistré`);
+    await charger();
+    renderTransport();
+    renderDashboard();
+  }catch(e){toast('❌ Erreur Supabase: '+e.message);}
 }
 
-function supprimerTransport(id){
+async function supprimerTransport(id){
   if(!confirm('Supprimer ce frais de transport ?'))return;
-  const list=getTransports().filter(t=>t.id!==id);
-  saveTransports(list);
-  toast('🗑️ Frais supprimé');
-  renderTransport();
-  renderDashboard();
+  try{
+    await sbDelete('transports',id);
+    toast('🗑️ Frais supprimé');
+    await charger();
+    renderTransport();
+    renderDashboard();
+  }catch(e){toast('❌ Erreur Supabase: '+e.message);}
 }
 
 function renderTransport(){
-  const list=getTransports();
+  const list=(S.transports||[]).filter(t=>t.employe===NOM);
   const today=new Date().toLocaleDateString('fr-FR');
-  const mois=today.slice(3); // mm/aaaa
+  const mois=today.slice(3);
   const totalJour=list.filter(t=>t.date===today).reduce((s,t)=>s+t.montant,0);
-  const totalMois=list.filter(t=>t.date.slice(3)===mois).reduce((s,t)=>s+t.montant,0);
-  // Bénéfice net = bénéfice ventes du jour - transport du jour
+  const totalMois=list.filter(t=>(t.date||'').slice(3)===mois).reduce((s,t)=>s+t.montant,0);
   const mesV=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
   const benefBrut=mesV.reduce((s,v)=>s+v.benef,0);
   const benefNet=benefBrut-totalJour;
   document.getElementById('tp-jour').textContent=fmt(totalJour);
   document.getElementById('tp-mois').textContent=fmt(totalMois);
   document.getElementById('tp-benef-net').textContent=fmt(Math.max(0,benefNet));
-  // Liste
   if(list.length===0){
     document.getElementById('transport-liste').innerHTML='<div class="empty"><span class="ei">🚚</span>Aucun frais enregistré</div>';
     return;
   }
-  const sorted=[...list].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const sorted=[...list].sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
   document.getElementById('transport-liste').innerHTML=sorted.map(t=>`
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
       <div>
-        <div style="font-size:13px;font-weight:600;color:var(--text)">🚚 ${t.desc}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.date}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">🚚 ${t.description||t.desc||'Transport'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.date||'—'}</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--red)">-${fmt(t.montant)}</span>
