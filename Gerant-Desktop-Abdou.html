@@ -217,8 +217,9 @@ textarea{resize:vertical;min-height:70px;}
       <div class="nav-label">Outils</div>
       <button class="nav-btn" onclick="goTo('inventaire',this)"><span class="ni">📋</span> Inventaire</button>
       <button class="nav-btn" onclick="goTo('recus',this)"><span class="ni">🧾</span> Reçus clients</button>
+      <button class="nav-btn" onclick="goTo('factures',this)"><span class="ni">📄</span> Factures A4</button>
       <button class="nav-btn" onclick="goTo('transport',this)"><span class="ni">🚚</span> Frais transport</button>
-
+      <button class="nav-btn" onclick="goTo('credits',this)"><span class="ni">💳</span> Crédits clients</button>
       <button class="nav-btn" onclick="goTo('historique',this)"><span class="ni">🗓️</span> Historique modifs</button>
       <button class="nav-btn" onclick="goTo('reception-groupe',this)"><span class="ni">📦</span> Réception groupée</button>
     </div>
@@ -478,6 +479,22 @@ textarea{resize:vertical;min-height:70px;}
     </div>
   </div>
 
+<!-- FACTURES A4 -->
+  <div class="page" id="page-factures">
+    <div class="page-header">
+      <div>
+        <div class="page-title">📄 Factures A4</div>
+        <div class="page-sub">FACTURES FORMAT PROFESSIONNEL</div>
+      </div>
+      <button class="btn btn-primary" onclick="ouvrirNouvelleFacture()">➕ Nouvelle facture</button>
+    </div>
+    <div class="card">
+      <div class="card-title">📄 Factures récentes <span id="badge-factures" class="bdg bdg-b">0</span></div>
+      <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher client..." oninput="filtrerFactures(this.value)"></div>
+      <div id="factures-list"><div class="empty"><span class="ei">📄</span>Aucune facture générée</div></div>
+    </div>
+  </div>
+
 <!-- PAGE TRANSPORT -->
   <div class="page" id="page-transport">
     <div class="page-header">
@@ -495,6 +512,24 @@ textarea{resize:vertical;min-height:70px;}
     <div class="card">
       <div class="card-title">📋 Historique des frais</div>
       <div id="transport-liste"><div class="empty"><span class="ei">🚚</span>Aucun frais enregistré</div></div>
+    </div>
+  </div>
+
+  <!-- 💳 CRÉDITS CLIENTS -->
+  <div class="page" id="page-credits">
+    <div class="page-header">
+      <div><div class="page-title">💳 Crédits clients</div><div class="page-sub">SUIVI DES ACHATS À CRÉDIT</div></div>
+      <button class="btn btn-primary" onclick="ouvrirNouvelleCreance()">➕ Nouveau crédit</button>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi-card kc-r"><span class="kpi-emoji">💳</span><div class="kpi-label">TOTAL DÛ</div><div class="kpi-value" id="cr-total-du">0 F</div></div>
+      <div class="kpi-card kc-o"><span class="kpi-emoji">👥</span><div class="kpi-label">CLIENTS EN CRÉDIT</div><div class="kpi-value" id="cr-nb-clients">0</div></div>
+      <div class="kpi-card kc-a"><span class="kpi-emoji">✅</span><div class="kpi-label">REMBOURSÉ CE MOIS</div><div class="kpi-value" id="cr-rembourse">0 F</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Liste des crédits</div>
+      <div class="sw"><span class="si">🔍</span><input type="text" placeholder="Rechercher client..." oninput="filtrerCredits(this.value)"></div>
+      <div id="credits-liste"><div class="empty"><span class="ei">💳</span>Aucun crédit enregistré</div></div>
     </div>
   </div>
 
@@ -538,8 +573,6 @@ textarea{resize:vertical;min-height:70px;}
   </div>
 
 </main>
-
-<!-- Page transport dupliquée supprimée (bug critique corrigé) -->
 
 <!-- ZONE D'IMPRESSION (hors écran) -->
 <div id="print-zone" style="display:none"></div>
@@ -750,6 +783,98 @@ textarea{resize:vertical;min-height:70px;}
   </div>
 </div>
 
+<!-- MODAL FACTURE A4 -->
+<div class="modal-overlay" id="modal-facture">
+  <div class="modal" style="width:640px">
+    <div class="modal-title" id="modal-facture-title">📄 Nouvelle facture A4</div>
+    <div class="form-row">
+      <div class="fg"><label>NOM DU CLIENT *</label><input type="text" id="fa-client" placeholder="Nom ou société..."></div>
+      <div class="fg"><label>TÉLÉPHONE CLIENT</label><input type="text" id="fa-tel-client" placeholder="77x xxx xx xx"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>ADRESSE CLIENT</label><input type="text" id="fa-adresse-client" placeholder="Adresse du client..."></div>
+      <div class="fg"><label>DATE</label><input type="text" id="fa-date" placeholder="jj/mm/aaaa"></div>
+    </div>
+    <div class="fg"><label>N° FACTURE</label><input type="text" id="fa-num" readonly style="opacity:.6"></div>
+    <!-- Articles -->
+    <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-bottom:6px;margin-top:4px">ARTICLES</div>
+    <div style="display:grid;grid-template-columns:1fr 70px 100px 32px;gap:8px;margin-bottom:4px">
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">DÉSIGNATION</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-align:center">QTÉ</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-align:right">PRIX UNIT.</div>
+      <div></div>
+    </div>
+    <div id="fa-articles"></div>
+    <button class="btn btn-ghost" style="width:100%;margin-bottom:14px" onclick="ajouterLigneFacture()">➕ Ajouter un article</button>
+    <!-- Totaux -->
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:14px">
+      <div class="ib-row"><span class="ib-lbl">Sous-total</span><span class="ib-val" id="fa-sous-total">0 F</span></div>
+      <div class="ib-row">
+        <span class="ib-lbl">Remise (%)</span>
+        <input type="number" id="fa-remise" value="0" min="0" max="100" oninput="calcFacture()" style="width:80px;padding:4px 8px;font-size:12px;text-align:right">
+      </div>
+      <div class="ib-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px">
+        <span style="font-weight:700;color:var(--text);font-family:'DM Mono',monospace">TOTAL</span>
+        <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)" id="fa-total">0 F</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>MODE DE PAIEMENT</label>
+        <select id="fa-paiement">
+          <option value="Espèces">💵 Espèces</option>
+          <option value="Mobile Money">📱 Mobile Money</option>
+          <option value="Virement">🏦 Virement</option>
+          <option value="Crédit">📋 Crédit</option>
+        </select>
+      </div>
+      <div class="fg"><label>NOTE / OBSERVATION</label><input type="text" id="fa-note" placeholder="Livraison incluse..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-facture')">Annuler</button>
+      <button class="btn btn-blue" onclick="genererFactureA4()">📄 Générer & Télécharger</button>
+      <button class="btn btn-primary" onclick="genererEtImprimerFactureA4()">🖨️ Générer & Imprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOUVEAU CRÉDIT -->
+<div class="modal-overlay" id="modal-creance">
+  <div class="modal">
+    <div class="modal-title" id="modal-creance-title">💳 Nouveau crédit client</div>
+    <div class="form-row">
+      <div class="fg"><label>NOM DU CLIENT *</label><input type="text" id="cr-client" placeholder="Nom du client..."></div>
+      <div class="fg"><label>TÉLÉPHONE</label><input type="text" id="cr-tel" placeholder="77x xxx xx xx"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>MONTANT DÛ (FCFA) *</label><input type="number" id="cr-montant" placeholder="Ex: 15000" min="0" oninput="calcCreance()"></div>
+      <div class="fg"><label>DATE</label><input type="text" id="cr-date" placeholder="jj/mm/aaaa"></div>
+    </div>
+    <div class="fg"><label>DESCRIPTION (articles achetés)</label><textarea id="cr-desc" placeholder="Ex: 2 marteaux, 5 mètres de câble..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-creance')">Annuler</button>
+      <button class="btn btn-primary" onclick="enregistrerCreance()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAIEMENT CRÉDIT -->
+<div class="modal-overlay" id="modal-paiement-credit">
+  <div class="modal">
+    <div class="modal-title">💰 Enregistrer un paiement</div>
+    <input type="hidden" id="pc-id">
+    <div id="pc-info" style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px"></div>
+    <div class="form-row">
+      <div class="fg"><label>MONTANT PAYÉ (FCFA) *</label><input type="number" id="pc-montant" placeholder="Ex: 5000" min="0"></div>
+      <div class="fg"><label>DATE</label><input type="text" id="pc-date" placeholder="jj/mm/aaaa"></div>
+    </div>
+    <div class="fg"><label>NOTE</label><input type="text" id="pc-note" placeholder="Paiement partiel..."></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fermerModal('modal-paiement-credit')">Annuler</button>
+      <button class="btn btn-primary" onclick="enregistrerPaiementCredit()">✓ Enregistrer paiement</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL TRANSPORT -->
 <div class="modal-overlay" id="modal-transport">
   <div class="modal">
@@ -899,7 +1024,20 @@ function seConnecter(){
 }
 function seDeconnecter(){if(!confirm('Se déconnecter ?'))return;sessionStorage.removeItem(SESSION);location.reload();}
 
-// ══ NAVIGATION ══
+// ══ UTILITAIRE DATE ══
+// Normalise une date en dd/mm/yyyy quel que soit le format d'entrée
+function normDate(d){
+  if(!d)return'';
+  if(d.includes('-')&&d.length>=10){
+    const [y,m,dd]=d.split('T')[0].split('-');
+    return`${dd}/${m}/${y}`;
+  }
+  return d;
+}
+// Filtre les ventes par date normalisée
+function filtrerVentesParDate(date,employe){
+  return S.ventes.filter(v=>normDate(v.date)===date&&(!employe||v.employe===employe));
+}
 function goTo(page,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -915,7 +1053,9 @@ function renderPage(p){
   else if(p==='alertes')renderAlertes();
   else if(p==='inventaire')renderInventaire();
   else if(p==='recus')renderRecus();
+  else if(p==='factures')renderFactures();
   else if(p==='transport')renderTransport();
+  else if(p==='credits')renderCredits();
   else if(p==='historique')renderHistorique();
   else if(p==='reception-groupe')renderReceptionGroupe();
 }
@@ -924,7 +1064,7 @@ function renderPage(p){
 function renderDashboard(){
   const today=new Date().toLocaleDateString('fr-FR');
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
-  const mesV=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
+  const mesV=filtrerVentesParDate(today,NOM);
   const ca=mesV.reduce((s,v)=>s+v.total,0);
   const bn=mesV.reduce((s,v)=>s+v.benef,0);
   const mg=ca>0?Math.round(bn/ca*100):0;
@@ -1185,7 +1325,7 @@ function ouvrirModal(id){
   document.getElementById(id).classList.add('open');
 }
 function fermerModal(id){document.getElementById(id).classList.remove('open');}
-// Délégation d'événement : ferme tout modal si clic sur l'overlay (couvre aussi les modals ajoutés dynamiquement)
+// Délégation d'événements pour fermer modal en cliquant dehors - couvre tous les modals même ajoutés dynamiquement
 document.addEventListener('click',function(e){
   if(e.target.classList.contains('modal-overlay'))e.target.classList.remove('open');
 });
@@ -1230,14 +1370,14 @@ function ouvrirEditVente(id){
   document.getElementById('ev-client').value=v.client||'';
   document.getElementById('ev-total-preview').style.display='block';
   document.getElementById('ev-total').textContent=fmt(v.pv*v.qty);
-  // Recalcul en temps réel — utiliser oninput HTML pour éviter accumulation de listeners
-  const calcEvTotal=()=>{
+  // Recalcul en temps réel via attributs HTML - pas de listeners accumulés
+  const calcEv=()=>{
     const q=parseInt(document.getElementById('ev-qty').value)||0;
     const p=parseInt(document.getElementById('ev-prix').value)||0;
     document.getElementById('ev-total').textContent=fmt(q*p);
   };
-  document.getElementById('ev-qty').oninput=calcEvTotal;
-  document.getElementById('ev-prix').oninput=calcEvTotal;
+  document.getElementById('ev-qty').oninput=calcEv;
+  document.getElementById('ev-prix').oninput=calcEv;
   ouvrirModal('modal-edit-vente');
 }
 
@@ -1456,18 +1596,18 @@ function filtrerRecus(v){renderRecus(v);}
 function ouvrirNouveauRecu(){
   RECU_LINES=0;
   RECU_EN_EDITION=null;
+  CLIENT_COUNT++;
   document.getElementById('rc-articles').innerHTML='';
   const num='REC-'+Date.now().toString(36).toUpperCase();
   document.getElementById('rc-num').value=num;
   document.getElementById('rc-date').value=new Date().toLocaleDateString('fr-FR');
-  document.getElementById('rc-client').value='';
+  document.getElementById('rc-client').value='Client-'+CLIENT_COUNT;
   document.getElementById('rc-remise').value=0;
   document.getElementById('rc-sous-total').textContent='0 F';
   document.getElementById('rc-total').textContent='0 F';
   document.getElementById('modal-recu-title').textContent='🧾 Créer un reçu client';
   ajouterLigneRecu();ajouterLigneRecu();
-  fermerModal('modal-recu');
-  document.getElementById('modal-recu').classList.add('open');
+  ouvrirModal('modal-recu');
 }
 function ajouterLigneRecu(prefill){
   RECU_LINES++;
@@ -1555,7 +1695,6 @@ function navDropdown(e,id){
   else if(e.key==='Escape'){fermerDropdown(id);}
   else if(e.key==='Tab'){fermerDropdown(id);}
 }
-function onRecuProduit(id){} // legacy, plus utilisé
 function calcRecu(){
   let sous=0;
   document.querySelectorAll('.rc-ligne').forEach(ligne=>{
@@ -1643,7 +1782,15 @@ async function genererRecu(){
       }
       // Supprimer UNIQUEMENT les ventes liées à CE reçu via recu_num
       try{
-        const vOld=await sbGet('ventes',`recu_num=eq.${encodeURIComponent(ancienRecu.num)}&employe=eq.${encodeURIComponent(NOM)}`);
+        // Essayer d'abord avec recu_num (nouveau), sinon fallback sur client+date
+        let vOld=[];
+        try{
+          vOld=await sbGet('ventes',`recu_num=eq.${encodeURIComponent(ancienRecu.num)}&employe=eq.${encodeURIComponent(NOM)}`);
+        }catch(e){
+          // recu_num n'existe pas encore dans Supabase, on cherche différemment
+          vOld=[];
+        }
+        // Si aucun résultat avec recu_num, ne rien supprimer (évite de supprimer les autres ventes)
         for(const v of (vOld||[])){try{await sbDelete('ventes',v.id);}catch(e){}}
       }catch(e){}
     }
@@ -1671,7 +1818,7 @@ async function genererRecu(){
         if(p){
           const newStock=Math.max(0,p.stock-a.qty);
           await sbPatch('produits',p.id,{stock:newStock});
-          p.stock=newStock; // mise à jour locale pour éviter double-déduction si même produit
+          p.stock=newStock; // mise à jour locale immédiate
         }
         await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM,recu_num:num});
         syncOk++;
@@ -1749,7 +1896,7 @@ function supprimerRecu(num){
 // ══ SYNC REÇU DEPUIS VENTES DU JOUR ══
 function syncRecuDepuisVentes(){
   const today=new Date().toLocaleDateString('fr-FR');
-  const ventesJour=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
+  const ventesJour=filtrerVentesParDate(today,NOM);
   if(ventesJour.length===0){toast('⚠️ Aucune vente enregistrée aujourd\'hui');return;}
   // Regrouper par article
   const grouped={};
@@ -1782,25 +1929,44 @@ function exporterVentesJourPDF(source){
   } else {
     dateChoisie=new Date().toLocaleDateString('fr-FR');
   }
-  const ventesJour=S.ventes.filter(v=>v.date===dateChoisie&&v.employe===NOM);
-  if(ventesJour.length===0){toast(`⚠️ Aucune vente le ${dateChoisie}`);return;}
-  const ca=ventesJour.reduce((s,v)=>s+v.total,0);
-  const bn=ventesJour.reduce((s,v)=>s+v.benef,0);
-  // Frais transport — déduits du bénéfice interne mais PAS sur la facture client
-  const transports=getTransports();
-  const totalTransport=transports.filter(t=>t.date===dateChoisie&&t.employe===NOM).reduce((s,t)=>s+t.montant,0);
-  const benefNet=bn-totalTransport;
-  const transportLine=totalTransport>0?`<div class="tot-block"><div class="tot-lbl">Transport</div><div class="tot-val" style="color:#e85020">-${fmt(totalTransport)}</div></div>`:'';
-  const benefNetLine=totalTransport>0?`<div class="tot-block"><div class="tot-lbl">Bénéfice net</div><div class="tot-val" style="color:#007a5e">${fmt(Math.max(0,benefNet))}</div></div>`:'';
+  // Chercher les ventes de cette date — sans filtre employe pour ne rien rater
+  const ventesJour=S.ventes.filter(v=>{
+    // Normaliser la date de la vente (peut être dd/mm/yyyy ou yyyy-mm-dd)
+    let vDate=v.date||'';
+    if(vDate.includes('-')&&vDate.length===10){
+      const [vy,vm,vd]=vDate.split('-');
+      vDate=`${vd}/${vm}/${vy}`;
+    }
+    return vDate===dateChoisie && v.employe===NOM;
+  });
+  if(ventesJour.length===0){
+    // Tenter sans filtre employe pour diagnostiquer
+    const toutesVentes=S.ventes.filter(v=>{
+      let vDate=v.date||'';
+      if(vDate.includes('-')&&vDate.length===10){
+        const [vy,vm,vd]=vDate.split('-');
+        vDate=`${vd}/${vm}/${vy}`;
+      }
+      return vDate===dateChoisie;
+    });
+    if(toutesVentes.length>0){
+      toast(`⚠️ ${toutesVentes.length} vente(s) trouvée(s) mais pas au nom de ${NOM}`);
+    } else {
+      toast(`⚠️ Aucune vente le ${dateChoisie}`);
+    }
+    return;
+  }
+  const ca=ventesJour.reduce((s,v)=>s+(v.total||0),0);
+  const bn=ventesJour.reduce((s,v)=>s+(v.benef||0),0);
   const cfg=PRINTER_CONFIG;
   const dateFile=dateChoisie.replace(/\//g,'-');
   const lignes=ventesJour.map((v,i)=>`
     <tr style="border-bottom:1px solid #eee">
       <td style="padding:6px 8px;font-size:12px">${String(i+1).padStart(2,'0')}</td>
-      <td style="padding:6px 8px;font-size:12px;font-weight:600">${v.nom}</td>
-      <td style="padding:6px 8px;font-size:12px;text-align:center">${v.qty} ${v.unite||''}</td>
-      <td style="padding:6px 8px;font-size:12px;text-align:right">${fmt(v.pv)}</td>
-      <td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#007a5e">${fmt(v.total)}</td>
+      <td style="padding:6px 8px;font-size:12px;font-weight:600">${v.nom||'—'}</td>
+      <td style="padding:6px 8px;font-size:12px;text-align:center">${v.qty||0} ${v.unite||''}</td>
+      <td style="padding:6px 8px;font-size:12px;text-align:right">${fmt(v.pv||0)}</td>
+      <td style="padding:6px 8px;font-size:12px;font-weight:700;text-align:right;color:#007a5e">${fmt(v.total||0)}</td>
       <td style="padding:6px 8px;font-size:12px;text-align:right;color:#555">${v.client||'—'}</td>
     </tr>`).join('');
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -1820,11 +1986,10 @@ function exporterVentesJourPDF(source){
     .tot-val{font-size:18px;font-weight:bold;color:#007a5e}
     .footer{margin-top:24px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:10px}
     .print-btn{display:flex;justify-content:center;gap:12px;margin-bottom:20px}
-    .print-btn button{padding:10px 24px;font-size:14px;font-weight:bold;border:none;border-radius:8px;cursor:pointer}
-    .btn-imp{background:#007a5e;color:#fff}
+    .print-btn button{padding:10px 24px;font-size:14px;font-weight:bold;border:none;border-radius:8px;cursor:pointer;background:#007a5e;color:#fff}
     @media print{.print-btn{display:none}body{padding:0}}
   </style></head><body>
-  <div class="print-btn"><button class="btn-imp" onclick="window.print()">🖨️ Imprimer / Sauvegarder PDF</button></div>
+  <div class="print-btn"><button onclick="window.print()">🖨️ Imprimer / Sauvegarder PDF</button></div>
   <div class="header">
     <div class="shop">🔧 ${cfg.boutique}</div>
     ${cfg.adresse?`<div class="addr">${cfg.adresse}</div>`:''}
@@ -1838,24 +2003,21 @@ function exporterVentesJourPDF(source){
   </table>
   <div class="totals">
     <div class="tot-block"><div class="tot-lbl">Nb ventes</div><div class="tot-val" style="color:#333">${ventesJour.length}</div></div>
-    <div class="tot-block"><div class="tot-lbl">Bénéfice brut</div><div class="tot-val" style="color:#e07a00">${fmt(bn)}</div></div>
-    ${transportLine}
-    ${benefNetLine}
+    <div class="tot-block"><div class="tot-lbl">Bénéfice</div><div class="tot-val" style="color:#e07a00">${fmt(bn)}</div></div>
     <div class="tot-block"><div class="tot-lbl">Chiffre d'affaires</div><div class="tot-val">${fmt(ca)}</div></div>
   </div>
-  <div class="footer">${cfg.footer} · ${cfg.boutique}</div>
+  <div class="footer">${cfg.footer||'Merci de votre confiance !'} · ${cfg.boutique}</div>
   </body></html>`;
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`Ventes_${dateFile}_${NOM.replace(' ','_')}.html`;
+  a.download=`Ventes_${dateFile}_${NOM.replace(/\s/g,'_')}.html`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),2000);
   toast(`⬇️ Rapport du ${dateChoisie} téléchargé`);
 }
 
-// ══ EXPORT CSV VENTES (date choisie ou aujourd'hui) ══
 function exporterVentesJourCSV(source){
   const inputId = source==='ventes' ? 'rapport-date-ventes' : 'rapport-date';
   const inputVal = document.getElementById(inputId)?.value;
@@ -1866,23 +2028,384 @@ function exporterVentesJourCSV(source){
   } else {
     dateChoisie=new Date().toLocaleDateString('fr-FR');
   }
-  const ventesJour=S.ventes.filter(v=>v.date===dateChoisie&&v.employe===NOM);
+  const ventesJour=S.ventes.filter(v=>{
+    let vDate=v.date||'';
+    if(vDate.includes('-')&&vDate.length===10){
+      const [vy,vm,vd]=vDate.split('-');
+      vDate=`${vd}/${vm}/${vy}`;
+    }
+    return vDate===dateChoisie&&v.employe===NOM;
+  });
   if(ventesJour.length===0){toast(`⚠️ Aucune vente le ${dateChoisie}`);return;}
   const dateFile=dateChoisie.replace(/\//g,'-');
   const entete='Date;Article;Quantité;Unité;Prix unitaire;Total;Bénéfice;Client\n';
-  const lignes=ventesJour.map(v=>`${v.date};${v.nom};${v.qty};${v.unite||'pièce'};${v.pv};${v.total};${v.benef};${v.client||''}`).join('\n');
+  const lignes=ventesJour.map(v=>`${v.date};${v.nom};${v.qty};${v.unite||'pièce'};${v.pv};${v.total};${v.benef||0};${v.client||''}`).join('\n');
   const csv='\uFEFF'+entete+lignes;
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download=`Ventes_${dateFile}_${NOM.replace(' ','_')}.csv`;
+  a.download=`Ventes_${dateFile}_${NOM.replace(/\s/g,'_')}.csv`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),2000);
   toast(`⬇️ CSV du ${dateChoisie} téléchargé`);
 }
 
+// ══ FACTURES A4 ══
+let FACTURES=[];
+let FA_EN_EDITION=null;
 
+function getFactures(){try{return JSON.parse(localStorage.getItem('factures_'+NOM)||'[]');}catch(e){return[];}}
+function saveFactures(list){localStorage.setItem('factures_'+NOM,JSON.stringify(list));}
+
+function ouvrirNouvelleFacture(){
+  FA_EN_EDITION=null;
+  FA_LINE_COUNT=0;
+  document.getElementById('fa-articles').innerHTML='';
+  const num='FAC-'+Date.now().toString(36).toUpperCase();
+  document.getElementById('fa-num').value=num;
+  document.getElementById('fa-date').value=new Date().toLocaleDateString('fr-FR');
+  document.getElementById('fa-client').value='';
+  document.getElementById('fa-tel-client').value='';
+  document.getElementById('fa-adresse-client').value='';
+  document.getElementById('fa-remise').value=0;
+  document.getElementById('fa-note').value='';
+  document.getElementById('fa-paiement').value='Espèces';
+  document.getElementById('fa-sous-total').textContent='0 F';
+  document.getElementById('fa-total').textContent='0 F';
+  document.getElementById('modal-facture-title').textContent='📄 Nouvelle facture A4';
+  ajouterLigneFacture();ajouterLigneFacture();
+  ouvrirModal('modal-facture');
+}
+
+function ouvrirEditFacture(num){
+  FACTURES=getFactures();
+  const f=FACTURES.find(x=>x.num===num);if(!f)return;
+  FA_EN_EDITION=num;
+  FA_LINE_COUNT=0;
+  document.getElementById('fa-articles').innerHTML='';
+  document.getElementById('fa-num').value=f.num;
+  document.getElementById('fa-client').value=f.client||'';
+  document.getElementById('fa-tel-client').value=f.telClient||'';
+  document.getElementById('fa-adresse-client').value=f.adresseClient||'';
+  document.getElementById('fa-date').value=f.date||'';
+  document.getElementById('fa-remise').value=f.remise||0;
+  document.getElementById('fa-note').value=f.note||'';
+  document.getElementById('fa-paiement').value=f.paiement||'Espèces';
+  document.getElementById('modal-facture-title').textContent='✏️ Modifier facture — '+num;
+  f.articles.forEach(a=>ajouterLigneFacture({nom:a.nom,qty:a.qty,prix:a.prix}));
+  calcFacture();
+  ouvrirModal('modal-facture');
+}
+
+let FA_LINE_COUNT=0;
+function ajouterLigneFacture(prefill){
+  FA_LINE_COUNT++;
+  const id='fl'+FA_LINE_COUNT;
+  const div=document.createElement('div');
+  div.className='rc-ligne';div.id=id;
+  div.innerHTML=`
+    <div class="rc-prod-wrap" id="${id}-wrap">
+      <input type="text" class="rc-prod-input" id="${id}-search" placeholder="Désignation article..." autocomplete="off"
+        oninput="rechercherProduitFacture('${id}')"
+        onfocus="rechercherProduitFacture('${id}')"
+        onkeydown="navDropdown(event,'${id}')">
+      <input type="hidden" id="${id}-nom" value="">
+      <div class="rc-prod-dropdown" id="${id}-drop"></div>
+    </div>
+    <input type="number" class="rc-qty-input" id="${id}-qty" value="1" min="1" oninput="calcFacture()" placeholder="1">
+    <input type="number" class="rc-prix-input" id="${id}-prix" placeholder="Prix" oninput="calcFacture()">
+    <button class="rc-del-btn" onclick="this.closest('.rc-ligne').remove();calcFacture()">×</button>`;
+  document.getElementById('fa-articles').appendChild(div);
+  if(prefill){
+    document.getElementById(id+'-search').value=prefill.nom;
+    document.getElementById(id+'-search').classList.add('selected');
+    document.getElementById(id+'-nom').value=prefill.nom;
+    document.getElementById(id+'-qty').value=prefill.qty;
+    document.getElementById(id+'-prix').value=prefill.prix;
+    calcFacture();
+  } else {
+    setTimeout(()=>document.getElementById(id+'-search')?.focus(),50);
+  }
+  document.addEventListener('click',function handler(e){
+    const wrap=document.getElementById(id+'-wrap');
+    if(wrap&&!wrap.contains(e.target)){fermerDropdown(id);}
+  },{once:true,capture:false});
+}
+
+function rechercherProduitFacture(id){
+  const q=(document.getElementById(id+'-search')?.value||'').toLowerCase().trim();
+  const drop=document.getElementById(id+'-drop');
+  document.getElementById(id+'-nom').value='';
+  document.getElementById(id+'-search').classList.remove('selected');
+  let prods=S.produits;
+  if(q)prods=prods.filter(p=>p.nom.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
+  prods=prods.slice(0,8);
+  if(prods.length===0){
+    drop.innerHTML=`<div class="rc-prod-empty">Aucun article trouvé</div>`;
+  } else {
+    drop.innerHTML=prods.map(p=>`
+      <div class="rc-prod-item" onclick="selectionnerProduitFacture('${id}','${p.nom.replace(/'/g,"\\'")}',${p.vente})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="rc-prod-item-nom">${p.nom}</div>
+          <div class="rc-prod-item-prix">${fmt(p.vente)}</div>
+        </div>
+        <div class="rc-prod-item-meta">${p.cat} · Stock: ${p.stock} ${p.unite||''}</div>
+      </div>`).join('');
+  }
+  drop.classList.add('open');
+}
+
+function selectionnerProduitFacture(id,nom,prix){
+  document.getElementById(id+'-search').value=nom;
+  document.getElementById(id+'-search').classList.add('selected');
+  document.getElementById(id+'-nom').value=nom;
+  document.getElementById(id+'-prix').value=prix;
+  fermerDropdown(id);
+  document.getElementById(id+'-qty').select();
+  calcFacture();
+}
+
+function calcFacture(){
+  let sous=0;
+  document.querySelectorAll('#fa-articles .rc-ligne').forEach(ligne=>{
+    const id=ligne.id;
+    const qty=parseInt(document.getElementById(id+'-qty')?.value)||0;
+    const prix=parseInt(document.getElementById(id+'-prix')?.value)||0;
+    sous+=qty*prix;
+  });
+  const remise=parseInt(document.getElementById('fa-remise').value)||0;
+  const total=sous*(1-remise/100);
+  document.getElementById('fa-sous-total').textContent=fmt(sous);
+  document.getElementById('fa-total').textContent=fmt(total);
+}
+
+function collecterLignesFacture(){
+  const articles=[];
+  document.querySelectorAll('#fa-articles .rc-ligne').forEach(ligne=>{
+    const id=ligne.id;
+    const nomEl=document.getElementById(id+'-nom');
+    const qty=parseInt(document.getElementById(id+'-qty')?.value)||0;
+    const prix=parseInt(document.getElementById(id+'-prix')?.value)||0;
+    const nom=(nomEl?.value||document.getElementById(id+'-search')?.value||'').trim();
+    if(qty>0&&prix>0&&nom)articles.push({nom,qty,prix,total:qty*prix});
+  });
+  return articles;
+}
+
+function buildFactureA4HTML(facture){
+  const cfg=PRINTER_CONFIG;
+  const lignes=facture.articles.map((a,i)=>`
+    <tr>
+      <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #eee">${String(i+1).padStart(2,'0')}</td>
+      <td style="padding:10px 12px;font-size:13px;font-weight:600;border-bottom:1px solid #eee">${a.nom}</td>
+      <td style="padding:10px 12px;font-size:13px;text-align:center;border-bottom:1px solid #eee">${a.qty}</td>
+      <td style="padding:10px 12px;font-size:13px;text-align:right;border-bottom:1px solid #eee">${fmt(a.prix)}</td>
+      <td style="padding:10px 12px;font-size:13px;font-weight:700;text-align:right;border-bottom:1px solid #eee;color:#007a5e">${fmt(a.total)}</td>
+    </tr>`).join('');
+  const remiseLigne=facture.remise>0?`
+    <tr><td colspan="4" style="text-align:right;padding:8px 12px;font-size:13px;color:#e85020">Remise (${facture.remise}%)</td>
+    <td style="text-align:right;padding:8px 12px;font-size:13px;font-weight:700;color:#e85020">-${fmt(facture.sous-facture.total)}</td></tr>`:'';
+  return`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Facture ${facture.num}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:Arial,sans-serif;color:#111;background:#fff;padding:32px 40px;max-width:794px;margin:0 auto;}
+    .print-btn{display:flex;justify-content:center;gap:12px;margin-bottom:24px;}
+    .print-btn button{padding:10px 24px;font-size:14px;font-weight:bold;border:none;border-radius:8px;cursor:pointer;background:#007a5e;color:#fff;}
+    @media print{.print-btn{display:none}body{padding:20px}}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #111;}
+    .shop-name{font-size:26px;font-weight:bold;color:#111;}
+    .shop-info{font-size:12px;color:#555;margin-top:6px;line-height:1.7;}
+    .facture-title{font-size:32px;font-weight:bold;color:#007a5e;text-align:right;}
+    .facture-num{font-size:13px;color:#555;text-align:right;margin-top:4px;}
+    .facture-date{font-size:13px;color:#555;text-align:right;}
+    .client-box{background:#f8f8f8;border-radius:8px;padding:16px 20px;margin-bottom:28px;border-left:4px solid #007a5e;}
+    .client-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+    .client-name{font-size:16px;font-weight:bold;color:#111;}
+    .client-info{font-size:12px;color:#555;margin-top:3px;line-height:1.6;}
+    table{width:100%;border-collapse:collapse;margin-bottom:0;}
+    thead tr{background:#111;color:#fff;}
+    th{padding:10px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;text-align:left;font-weight:600;}
+    th:last-child,th:nth-child(3),th:nth-child(4){text-align:right;}
+    th:nth-child(3){text-align:center;}
+    .totals-box{margin-top:0;display:flex;justify-content:flex-end;}
+    .totals-inner{width:280px;}
+    .tot-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid #eee;}
+    .tot-row.final{border-top:2px solid #111;border-bottom:none;padding-top:12px;margin-top:4px;}
+    .tot-label{color:#555;}
+    .tot-val{font-weight:700;color:#111;}
+    .tot-val.green{color:#007a5e;font-size:18px;}
+    .footer-box{margin-top:36px;padding-top:16px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:flex-end;}
+    .footer-msg{font-size:12px;color:#555;}
+    .footer-sign{text-align:right;}
+    .footer-sign-label{font-size:11px;color:#999;margin-bottom:30px;}
+    .footer-sign-line{border-top:1px solid #999;width:160px;padding-top:4px;font-size:11px;color:#555;text-align:center;}
+    .note-box{margin-top:16px;background:#fffbf0;border:1px solid #f0e0a0;border-radius:6px;padding:10px 14px;font-size:12px;color:#666;}
+  </style></head><body>
+  <div class="print-btn"><button onclick="window.print()">🖨️ Imprimer / Sauvegarder PDF</button></div>
+  <div class="header">
+    <div>
+      <div class="shop-name">🔧 ${cfg.boutique}</div>
+      <div class="shop-info">
+        ${cfg.adresse?cfg.adresse+'<br>':''}
+        ${cfg.tel?'📞 '+cfg.tel:''}
+      </div>
+    </div>
+    <div>
+      <div class="facture-title">FACTURE</div>
+      <div class="facture-num">N° ${facture.num}</div>
+      <div class="facture-date">Date : ${facture.date}</div>
+      <div class="facture-date" style="margin-top:4px">Vendeur : ${facture.employe}</div>
+    </div>
+  </div>
+  <div class="client-box">
+    <div class="client-label">Facturé à</div>
+    <div class="client-name">${facture.client}</div>
+    <div class="client-info">
+      ${facture.telClient?'📞 '+facture.telClient+'<br>':''}
+      ${facture.adresseClient?'📍 '+facture.adresseClient:''}
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Désignation</th><th style="text-align:center">Qté</th><th style="text-align:right">Prix unit.</th><th style="text-align:right">Total</th></tr></thead>
+    <tbody>${lignes}${remiseLigne}</tbody>
+  </table>
+  <div class="totals-box">
+    <div class="totals-inner">
+      <div class="tot-row"><span class="tot-label">Sous-total</span><span class="tot-val">${fmt(facture.sous)}</span></div>
+      ${facture.remise>0?`<div class="tot-row"><span class="tot-label">Remise ${facture.remise}%</span><span class="tot-val" style="color:#e85020">-${fmt(facture.sous-facture.total)}</span></div>`:''}
+      <div class="tot-row"><span class="tot-label">Mode de paiement</span><span class="tot-val">${facture.paiement}</span></div>
+      <div class="tot-row final"><span class="tot-label" style="font-size:15px;font-weight:700">TOTAL À PAYER</span><span class="tot-val green">${fmt(facture.total)}</span></div>
+    </div>
+  </div>
+  ${facture.note?`<div class="note-box">📝 ${facture.note}</div>`:''}
+  <div class="footer-box">
+    <div class="footer-msg">${cfg.footer||'Merci de votre confiance !'}<br><span style="font-size:11px;color:#aaa">Les marchandises vendues ne sont ni reprises ni échangées.</span></div>
+    <div class="footer-sign">
+      <div class="footer-sign-label">Signature & Cachet</div>
+      <div class="footer-sign-line">${cfg.boutique}</div>
+    </div>
+  </div>
+  </body></html>`;
+}
+
+async function genererFactureA4(){
+  const articles=collecterLignesFacture();
+  if(articles.length===0){toast('⚠️ Ajoute au moins un article');return;}
+  const client=document.getElementById('fa-client').value.trim();
+  if(!client){toast('⚠️ Le nom du client est obligatoire');return;}
+  const num=document.getElementById('fa-num').value;
+  const date=document.getElementById('fa-date').value||new Date().toLocaleDateString('fr-FR');
+  const telClient=document.getElementById('fa-tel-client').value;
+  const adresseClient=document.getElementById('fa-adresse-client').value;
+  const remise=parseInt(document.getElementById('fa-remise').value)||0;
+  const note=document.getElementById('fa-note').value;
+  const paiement=document.getElementById('fa-paiement').value;
+  const sous=articles.reduce((s,a)=>s+a.total,0);
+  const total=Math.round(sous*(1-remise/100));
+  const facture={num,client,telClient,adresseClient,date,articles,remise,note,paiement,sous,total,employe:NOM,ts:new Date().toISOString()};
+
+  // Sauvegarder
+  FACTURES=getFactures();
+  FACTURES=FACTURES.filter(f=>f.num!==num);
+  FACTURES.push(facture);
+  saveFactures(FACTURES);
+
+  // Générer et télécharger le HTML
+  const html=buildFactureA4HTML(facture);
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Facture_${num}_${client.replace(/\s/g,'_')}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+
+  fermerModal('modal-facture');
+  renderFactures();
+  toast(`✅ Facture ${num} téléchargée`);
+}
+
+async function genererEtImprimerFactureA4(){
+  const articles=collecterLignesFacture();
+  if(articles.length===0){toast('⚠️ Ajoute au moins un article');return;}
+  const client=document.getElementById('fa-client').value.trim();
+  if(!client){toast('⚠️ Le nom du client est obligatoire');return;}
+  const num=document.getElementById('fa-num').value;
+  const date=document.getElementById('fa-date').value||new Date().toLocaleDateString('fr-FR');
+  const telClient=document.getElementById('fa-tel-client').value;
+  const adresseClient=document.getElementById('fa-adresse-client').value;
+  const remise=parseInt(document.getElementById('fa-remise').value)||0;
+  const note=document.getElementById('fa-note').value;
+  const paiement=document.getElementById('fa-paiement').value;
+  const sous=articles.reduce((s,a)=>s+a.total,0);
+  const total=Math.round(sous*(1-remise/100));
+  const facture={num,client,telClient,adresseClient,date,articles,remise,note,paiement,sous,total,employe:NOM,ts:new Date().toISOString()};
+  FACTURES=getFactures();
+  FACTURES=FACTURES.filter(f=>f.num!==num);
+  FACTURES.push(facture);
+  saveFactures(FACTURES);
+  // Imprimer directement
+  const html=buildFactureA4HTML(facture);
+  document.getElementById('print-zone').innerHTML=`<iframe id="facture-frame" style="width:100%;height:100%;border:none"></iframe>`;
+  const iframe=document.getElementById('facture-frame');
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+  setTimeout(()=>{iframe.contentWindow.print();},400);
+  fermerModal('modal-facture');
+  renderFactures();
+  toast(`🖨️ Impression facture ${num}`);
+}
+
+function renderFactures(filtre=''){
+  FACTURES=getFactures();
+  document.getElementById('badge-factures').textContent=FACTURES.length;
+  let liste=FACTURES;
+  if(filtre)liste=liste.filter(f=>f.client.toLowerCase().includes(filtre.toLowerCase())||f.num.toLowerCase().includes(filtre.toLowerCase()));
+  if(liste.length===0){
+    document.getElementById('factures-list').innerHTML='<div class="empty"><span class="ei">📄</span>Aucune facture générée</div>';
+    return;
+  }
+  document.getElementById('factures-list').innerHTML=[...liste].reverse().map(f=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${f.client} <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${f.num}</span></div>
+        <div style="font-size:11px;color:var(--text3)">${f.date} · ${f.paiement} · ${f.articles.length} article(s)</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">${fmt(f.total)}</span>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="telechargerFacture('${f.num}')">⬇️</button>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="ouvrirEditFacture('${f.num}')">✏️</button>
+        <button class="btn" style="padding:4px 8px;font-size:11px;background:rgba(232,80,32,.1);color:var(--red);border:1px solid rgba(232,80,32,.2)" onclick="supprimerFacture('${f.num}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function telechargerFacture(num){
+  FACTURES=getFactures();
+  const f=FACTURES.find(x=>x.num===num);if(!f)return;
+  const html=buildFactureA4HTML(f);
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Facture_${f.num}_${f.client.replace(/\s/g,'_')}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  toast(`⬇️ Facture ${num} téléchargée`);
+}
+
+function supprimerFacture(num){
+  if(!confirm('Supprimer cette facture ?'))return;
+  FACTURES=getFactures().filter(f=>f.num!==num);
+  saveFactures(FACTURES);
+  renderFactures();
+  toast('🗑️ Facture supprimée');
+}
+
+function filtrerFactures(v){renderFactures(v);}
 
 // ══ FRAIS DE TRANSPORT ══
 function getTransports(){
@@ -1930,7 +2453,7 @@ function renderTransport(){
   const totalJour=list.filter(t=>t.date===today).reduce((s,t)=>s+t.montant,0);
   const totalMois=list.filter(t=>t.date.slice(3)===mois).reduce((s,t)=>s+t.montant,0);
   // Bénéfice net = bénéfice ventes du jour - transport du jour
-  const mesV=S.ventes.filter(v=>v.date===today&&v.employe===NOM);
+  const mesV=filtrerVentesParDate(today,NOM);
   const benefBrut=mesV.reduce((s,v)=>s+v.benef,0);
   const benefNet=benefBrut-totalJour;
   document.getElementById('tp-jour').textContent=fmt(totalJour);
@@ -1954,6 +2477,123 @@ function renderTransport(){
       </div>
     </div>`).join('');
 }
+
+// ════════════════════════════════════════════
+// 💳 CRÉDITS CLIENTS
+// ════════════════════════════════════════════
+function getCredits(){try{return JSON.parse(localStorage.getItem('credits_'+NOM)||'[]');}catch(e){return[];}}
+function saveCredits(list){localStorage.setItem('credits_'+NOM,JSON.stringify(list));}
+
+function logHistorique(action,detail){
+  const h=getHistorique();
+  h.unshift({id:Date.now().toString(36),action,detail,employe:NOM,ts:new Date().toISOString(),date:new Date().toLocaleDateString('fr-FR'),heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
+  // Garder max 500 entrées
+  localStorage.setItem('historique_'+NOM,JSON.stringify(h.slice(0,500)));
+}
+
+function calcCreance(){} // placeholder - pas de calcul nécessaire pour l'instant
+
+function ouvrirNouvelleCreance(){
+  document.getElementById('cr-client').value='';
+  document.getElementById('cr-tel').value='';
+  document.getElementById('cr-montant').value='';
+  document.getElementById('cr-desc').value='';
+  document.getElementById('cr-date').value=new Date().toLocaleDateString('fr-FR');
+  document.getElementById('modal-creance-title').textContent='💳 Nouveau crédit client';
+  ouvrirModal('modal-creance');
+  setTimeout(()=>document.getElementById('cr-client').focus(),100);
+}
+
+function enregistrerCreance(){
+  const client=document.getElementById('cr-client').value.trim();
+  const tel=document.getElementById('cr-tel').value.trim();
+  const montant=parseInt(document.getElementById('cr-montant').value)||0;
+  const desc=document.getElementById('cr-desc').value.trim();
+  const date=document.getElementById('cr-date').value||new Date().toLocaleDateString('fr-FR');
+  if(!client){toast('⚠️ Nom du client obligatoire');return;}
+  if(montant<=0){toast('⚠️ Montant invalide');return;}
+  const credits=getCredits();
+  credits.push({id:Date.now().toString(36),client,tel,montantInitial:montant,montantRestant:montant,desc,date,employe:NOM,paiements:[],ts:new Date().toISOString(),solde:false});
+  saveCredits(credits);
+  logHistorique('💳 Crédit créé',`${client} — ${fmt(montant)}`);
+  fermerModal('modal-creance');
+  toast(`✅ Crédit de ${fmt(montant)} enregistré pour ${client}`);
+  renderCredits();
+}
+
+function ouvrirPaiementCredit(id){
+  const credits=getCredits();
+  const c=credits.find(x=>x.id===id);if(!c)return;
+  document.getElementById('pc-id').value=id;
+  document.getElementById('pc-info').innerHTML=`<b>${c.client}</b><br>Montant restant : <span style="color:var(--red);font-weight:700">${fmt(c.montantRestant)}</span>`;
+  document.getElementById('pc-montant').value='';
+  document.getElementById('pc-note').value='';
+  document.getElementById('pc-date').value=new Date().toLocaleDateString('fr-FR');
+  ouvrirModal('modal-paiement-credit');
+  setTimeout(()=>document.getElementById('pc-montant').focus(),100);
+}
+
+function enregistrerPaiementCredit(){
+  const id=document.getElementById('pc-id').value;
+  const montant=parseInt(document.getElementById('pc-montant').value)||0;
+  const note=document.getElementById('pc-note').value.trim();
+  const date=document.getElementById('pc-date').value||new Date().toLocaleDateString('fr-FR');
+  if(montant<=0){toast('⚠️ Montant invalide');return;}
+  const credits=getCredits();
+  const c=credits.find(x=>x.id===id);if(!c)return;
+  c.paiements.push({montant,date,note,ts:new Date().toISOString()});
+  c.montantRestant=Math.max(0,c.montantRestant-montant);
+  if(c.montantRestant===0)c.solde=true;
+  saveCredits(credits);
+  logHistorique('💰 Paiement crédit',`${c.client} — payé ${fmt(montant)} — reste ${fmt(c.montantRestant)}`);
+  fermerModal('modal-paiement-credit');
+  toast(`✅ Paiement de ${fmt(montant)} enregistré`);
+  renderCredits();
+}
+
+function supprimerCredit(id){
+  if(!confirm('Supprimer ce crédit ?'))return;
+  const credits=getCredits().filter(x=>x.id!==id);
+  saveCredits(credits);
+  logHistorique('🗑️ Crédit supprimé','Suppression manuelle');
+  renderCredits();
+  toast('🗑️ Crédit supprimé');
+}
+
+function renderCredits(filtre=''){
+  let credits=getCredits().filter(c=>c.employe===NOM);
+  const totalDu=credits.filter(c=>!c.solde).reduce((s,c)=>s+c.montantRestant,0);
+  const nbClients=new Set(credits.filter(c=>!c.solde).map(c=>c.client)).size;
+  const mois=new Date().toLocaleDateString('fr-FR').slice(3);
+  const rembourse=credits.flatMap(c=>c.paiements).filter(p=>p.date.slice(3)===mois).reduce((s,p)=>s+p.montant,0);
+  document.getElementById('cr-total-du').textContent=fmt(totalDu);
+  document.getElementById('cr-nb-clients').textContent=nbClients;
+  document.getElementById('cr-rembourse').textContent=fmt(rembourse);
+  if(filtre)credits=credits.filter(c=>c.client.toLowerCase().includes(filtre.toLowerCase()));
+  const sorted=[...credits].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  if(sorted.length===0){document.getElementById('credits-liste').innerHTML='<div class="empty"><span class="ei">💳</span>Aucun crédit enregistré</div>';return;}
+  document.getElementById('credits-liste').innerHTML=sorted.map(c=>`
+    <div style="border:1px solid ${c.solde?'var(--accent)':'var(--red)'};border-radius:10px;padding:14px;margin-bottom:10px;background:${c.solde?'rgba(0,200,150,.05)':'rgba(232,80,32,.05)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--text)">${c.client} ${c.tel?`<span style="font-size:11px;color:var(--text3)">📞 ${c.tel}</span>`:''}
+            <span style="margin-left:8px;padding:2px 8px;border-radius:20px;font-size:10px;font-family:'DM Mono',monospace;background:${c.solde?'rgba(0,200,150,.2)':'rgba(232,80,32,.2)'};color:${c.solde?'var(--accent)':'var(--red)'}">${c.solde?'✅ SOLDÉ':'⏳ EN COURS'}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">${c.date} · ${c.desc||'—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text3)">Initial: ${fmt(c.montantInitial)}</div>
+          <div style="font-size:18px;font-weight:800;font-family:'Syne',sans-serif;color:${c.solde?'var(--accent)':'var(--red)'}">Reste: ${fmt(c.montantRestant)}</div>
+        </div>
+      </div>
+      ${c.paiements.length>0?`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">Paiements: ${c.paiements.map(p=>`${p.date}: ${fmt(p.montant)}`).join(' · ')}</div>`:''}
+      <div style="display:flex;gap:8px">
+        ${!c.solde?`<button class="btn btn-primary" style="padding:5px 12px;font-size:11px" onclick="ouvrirPaiementCredit('${c.id}')">💰 Enregistrer paiement</button>`:''}
+        <button class="btn btn-ghost" style="padding:5px 12px;font-size:11px" onclick="supprimerCredit('${c.id}')">🗑️ Supprimer</button>
+      </div>
+    </div>`).join('');
+}
+function filtrerCredits(v){renderCredits(v);}
 
 // ════════════════════════════════════════════
 // 🗓️ HISTORIQUE DES MODIFICATIONS
@@ -1983,8 +2623,6 @@ function renderHistorique(filtre=''){
     </div>`).join('');
 }
 function filtrerHistorique(v){renderHistorique(v);}
-
-// On loggue manuellement dans chaque fonction critique
 
 // ════════════════════════════════════════════
 // 📦 RÉCEPTION GROUPÉE
@@ -2104,41 +2742,6 @@ function renderReceptionGroupe(){
   // S'assurer qu'il y a au moins une ligne vide au chargement
   if(document.getElementById('rg-articles').children.length===0)ajouterLigneReceptionGroupe();
 }
-
-
-// ════════════════════════════════════════════
-// 🗓️ HISTORIQUE DES MODIFICATIONS
-// ════════════════════════════════════════════
-function getHistorique(){try{return JSON.parse(localStorage.getItem('historique_'+NOM)||'[]');}catch(e){return[];}}
-
-function logHistorique(action,detail){
-  const h=getHistorique();
-  h.unshift({id:Date.now().toString(36),action,detail,employe:NOM,ts:new Date().toISOString(),date:new Date().toLocaleDateString('fr-FR'),heure:new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})});
-  localStorage.setItem('historique_'+NOM,JSON.stringify(h.slice(0,500)));
-}
-
-function viderHistorique(){
-  if(!confirm('Vider tout l\'historique ?'))return;
-  localStorage.removeItem('historique_'+NOM);
-  renderHistorique();
-  toast('🗑️ Historique vidé');
-}
-
-function renderHistorique(filtre=''){
-  let h=getHistorique();
-  if(filtre)h=h.filter(x=>x.action.toLowerCase().includes(filtre.toLowerCase())||x.detail.toLowerCase().includes(filtre.toLowerCase()));
-  if(h.length===0){document.getElementById('historique-liste').innerHTML='<div class="empty"><span class="ei">🗓️</span>Aucune modification enregistrée</div>';return;}
-  document.getElementById('historique-liste').innerHTML=h.map(x=>`
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:20px;flex-shrink:0;margin-top:2px">${x.action.split(' ')[0]}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">${x.action}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px">${x.detail}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace">${x.date} à ${x.heure} · ${x.employe}</div>
-      </div>
-    </div>`).join('');
-}
-function filtrerHistorique(v){renderHistorique(v);}
 
 // ══ INIT ══
 async function init(){
