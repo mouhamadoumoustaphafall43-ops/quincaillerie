@@ -1698,83 +1698,50 @@ async function genererRecu(){
   if(btn&&btn.disabled)return;
   if(btn)btn.disabled=true;
   try{
-  const articles=collecterLignesRecu();
-  if(articles.length===0){toast('⚠️ Ajoute au moins un article');return;}
-  const client=document.getElementById('rc-client').value||'Client';
-  const date=document.getElementById('rc-date').value||new Date().toLocaleDateString('fr-FR');
-  const num=document.getElementById('rc-num').value;
-  const remise=parseInt(document.getElementById('rc-remise').value)||0;
-  const paiement=document.getElementById('rc-paiement').value;
-  const sous=articles.reduce((s,a)=>s+a.total,0);
-  const total=Math.round(sous*(1-remise/100));
-  const recu={num,client,date,articles,remise,paiement,sous,total,employe:NOM,ts:new Date().toISOString()};
+    const articles=collecterLignesRecu();
+    if(articles.length===0){toast('⚠️ Ajoute au moins un article');return;}
+    const client=document.getElementById('rc-client').value||'Client';
+    const date=document.getElementById('rc-date').value||new Date().toLocaleDateString('fr-FR');
+    const num=document.getElementById('rc-num').value;
+    const remise=parseInt(document.getElementById('rc-remise').value)||0;
+    const paiement=document.getElementById('rc-paiement').value;
+    const sous=articles.reduce((s,a)=>s+a.total,0);
+    const total=Math.round(sous*(1-remise/100));
+    const recu={num,client,date,articles,remise,paiement,sous,total,employe:NOM,ts:new Date().toISOString()};
 
-  // Sauvegarder le reçu en local (écrase l'ancien si même num)
-  try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
-  const ancienRecu=RECUS.find(r=>r.num===num); // récupérer l'ancien pour le diff stock
-  RECUS=RECUS.filter(r=>r.num!==num);
-  RECUS.push(recu);
-  localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
+    // Sauvegarder en local
+    try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+    const ancienRecu=RECUS.find(r=>r.num===num);
+    RECUS=RECUS.filter(r=>r.num!==num);
+    RECUS.push(recu);
+    localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
 
-  const estEdition = RECU_EN_EDITION !== null;
-  RECU_EN_EDITION = null;
+    const estEdition=RECU_EN_EDITION!==null;
+    RECU_EN_EDITION=null;
+    setSyncStatus('loading','💾 Sync ventes...');
+    let syncOk=0;
 
-  setSyncStatus('loading','💾 Sync ventes...');
-  let syncOk=0;
-
-  if(estEdition){
-    // ══ MODE ÉDITION : ajuster le stock article par article (diff ancien vs nouveau) ══
-    if(ancienRecu){
+    if(estEdition&&ancienRecu){
       // Remettre le stock des anciens articles
       for(const a of ancienRecu.articles){
         const p=S.produits.find(x=>x.nom===a.nom);
-        if(p){
-          const newStock=p.stock+a.qty;
-          try{await sbPatch('produits',p.id,{stock:newStock});p.stock=newStock;}catch(e){}
-        }
+        if(p){const ns=p.stock+a.qty;try{await sbPatch('produits',p.id,{stock:ns});p.stock=ns;}catch(e){}}
       }
-      // Supprimer UNIQUEMENT les ventes liées à CE reçu via recu_num
+      // Supprimer les anciennes ventes de ce reçu
       try{
-        // Essayer d'abord avec recu_num (nouveau), sinon fallback sur client+date
-        let vOld=[];
-        try{
-          vOld=await sbGet('ventes',`recu_num=eq.${encodeURIComponent(ancienRecu.num)}&employe=eq.${encodeURIComponent(NOM)}`);
-        }catch(e){
-          // recu_num n'existe pas encore dans Supabase, on cherche différemment
-          vOld=[];
-        }
-        // Si aucun résultat avec recu_num, ne rien supprimer (évite de supprimer les autres ventes)
+        const vOld=await sbGet('ventes',`recu_num=eq.${encodeURIComponent(ancienRecu.num)}&employe=eq.${encodeURIComponent(NOM)}`);
         for(const v of (vOld||[])){try{await sbDelete('ventes',v.id);}catch(e){}}
       }catch(e){}
     }
-    // Appliquer le nouveau stock et créer les nouvelles ventes avec recu_num
+
+    // Créer les nouvelles ventes
     for(const a of articles){
       try{
         const p=S.produits.find(x=>x.nom===a.nom);
         const pa=p?p.achat:0;
-        if(p){
-          const newStock=Math.max(0,p.stock-a.qty);
-          await sbPatch('produits',p.id,{stock:newStock});
-          p.stock=newStock;
-        }
-        await sbPost('ventes',{produit_id:p?p.id:null,nom:a.nom,unite:p?p.unite||'pièce':'pièce',qty:a.qty,pv:a.prix,pa,total:a.prix*a.qty,benef:(a.prix-pa)*a.qty,date,ts:new Date().toISOString(),client,employe:NOM,recu_num:num});
-        syncOk++;
-      }catch(e){toast('❌ Erreur sync "'+a.nom+'": '+e.message);}
-    }
-    toast(`✅ Reçu ${num} modifié — stock et ventes mis à jour`);
-  } else {
-    // ══ MODE CRÉATION : déduire le stock et créer les ventes avec recu_num ══
-    for(const a of articles){
-      try{
-        const p=S.produits.find(x=>x.nom===a.nom);
-        const pa=p?p.achat:0;
-        if(p){
-          const newStock=Math.max(0,p.stock-a.qty);
-          await sbPatch('produits',p.id,{stock:newStock});
-          p.stock=newStock;
-        }
-        const nouvelleVente={
-          id:'local-'+Date.now().toString(36)+Math.random().toString(36).slice(2),
+        if(p){const ns=Math.max(0,p.stock-a.qty);await sbPatch('produits',p.id,{stock:ns});p.stock=ns;}
+        // Ne pas envoyer d'id local à Supabase
+        const venteData={
           produit_id:p?p.id:null,
           nom:a.nom,
           unite:p?p.unite||'pièce':'pièce',
@@ -1784,24 +1751,31 @@ async function genererRecu(){
           date,ts:new Date().toISOString(),
           client,employe:NOM,recu_num:num
         };
-        const res=await sbPost('ventes',nouvelleVente);
-        // Ajouter immédiatement dans S.ventes localement
-        if(res&&res[0])S.ventes.unshift(res[0]);
-        else S.ventes.unshift(nouvelleVente);
+        const res=await sbPost('ventes',venteData);
+        // Ajouter localement avec l'ID retourné par Supabase
+        const venteCreee=(Array.isArray(res)&&res[0])?res[0]:{...venteData,id:'loc-'+Date.now().toString(36)};
+        S.ventes.unshift(venteCreee);
         syncOk++;
-      }catch(e){toast('❌ Erreur sync "'+a.nom+'": '+e.message);}
+      }catch(e){toast('❌ Erreur "'+a.nom+'": '+e.message);}
     }
-    if(syncOk===articles.length)toast(`✅ Reçu ${num} — ${syncOk} vente(s) enregistrée(s)`);
-    else toast(`⚠️ Reçu généré — ${syncOk}/${articles.length} ventes synchronisées`);
-  }
 
-  await charger();
-  setSyncStatus('ok');
-  fermerModal('modal-recu');
-  afficherRecu(num);
-  renderRecus();
-  }catch(e){toast('❌ Erreur: '+e.message);setSyncStatus('err');}
-  finally{const btn=document.querySelector('#modal-recu .btn-primary');if(btn)btn.disabled=false;}
+    setSyncStatus('ok');
+    if(estEdition)toast(`✅ Reçu ${num} modifié`);
+    else if(syncOk===articles.length)toast(`✅ Reçu ${num} — ${syncOk} vente(s) enregistrée(s)`);
+    else toast(`⚠️ Reçu généré — ${syncOk}/${articles.length} ventes synchronisées`);
+
+    fermerModal('modal-recu');
+    afficherRecu(num);
+    renderRecus();
+    renderVentes();
+    renderDashboard();
+  }catch(e){
+    toast('❌ Erreur: '+e.message);
+    setSyncStatus('err');
+  }finally{
+    const btn=document.querySelector('#modal-recu .btn-primary');
+    if(btn)btn.disabled=false;
+  }
 }
 async function genererEtImprimerRecu(){
   await genererRecu();
