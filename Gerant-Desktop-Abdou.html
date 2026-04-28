@@ -211,16 +211,12 @@ textarea{resize:vertical;min-height:70px;}
       <button class="nav-btn active" onclick="goTo('dashboard',this)"><span class="ni">📊</span> Tableau de bord</button>
       <button class="nav-btn" onclick="goTo('ventes',this)"><span class="ni">💰</span> Mes ventes</button>
       <button class="nav-btn" onclick="goTo('stock',this)"><span class="ni">📦</span> Stock</button>
-      <button class="nav-btn" onclick="goTo('alertes',this)"><span class="ni">🔔</span> Alertes</button>
+      <button class="nav-btn" onclick="goTo('alertes',this)"><span class="ni">🔔</span> Alertes <span class="bdg bdg-r" id="notif-badge" style="display:none;margin-left:auto">0</span></button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Outils</div>
       <button class="nav-btn" onclick="goTo('inventaire',this)"><span class="ni">📋</span> Inventaire</button>
       <button class="nav-btn" onclick="goTo('recus',this)"><span class="ni">🧾</span> Reçus clients</button>
-      <button class="nav-btn" onclick="goTo('factures',this)"><span class="ni">📄</span> Factures A4</button>
-      <button class="nav-btn" onclick="goTo('transport',this)"><span class="ni">🚚</span> Frais transport</button>
-      <button class="nav-btn" onclick="goTo('historique',this)"><span class="ni">🗓️</span> Historique modifs</button>
-      <button class="nav-btn" onclick="goTo('reception-groupe',this)"><span class="ni">📦</span> Réception groupée</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Actions</div>
@@ -980,7 +976,7 @@ function normDate(d){
 }
 // Filtre les ventes par date normalisée
 function filtrerVentesParDate(date,employe){
-  return S.ventes.filter(v=>normDate(v.date)===date&&(!employe||v.employe===employe));
+  return S.ventes.filter(v=>normDate(v.date)===date&&(!employe||!v.employe||v.employe.trim().toLowerCase()===employe.trim().toLowerCase()));
 }
 function goTo(page,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -988,7 +984,7 @@ function goTo(page,btn){
   document.getElementById('page-'+page).classList.add('active');
   if(btn)btn.classList.add('active');
   currentPage=page;
-  charger().then(()=>renderPage(page));
+  renderPage(page);
 }
 function renderPage(p){
   if(p==='dashboard')renderDashboard();
@@ -1008,8 +1004,8 @@ function renderDashboard(){
   const today=new Date().toLocaleDateString('fr-FR');
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
   const mesV=filtrerVentesParDate(today,NOM);
-  const ca=mesV.reduce((s,v)=>s+v.total,0);
-  const bn=mesV.reduce((s,v)=>s+v.benef,0);
+  const ca=mesV.reduce((s,v)=>s+(v.total||0),0);
+  const bn=mesV.reduce((s,v)=>s+(v.benef||0),0);
   const mg=ca>0?Math.round(bn/ca*100):0;
   const rupt=S.produits.filter(p=>p.stock===0).length;
 
@@ -1036,7 +1032,7 @@ function renderDashboard(){
   document.getElementById('dash-tx').innerHTML=mesV.length===0?'<div class="empty" style="padding:12px"><span class="ei">💸</span>Aucune vente aujourd\'hui</div>':mesV.slice(0,5).map(v=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><div><strong style="color:var(--text)">${v.nom}</strong><div style="font-size:10px;color:var(--text3)">qté ${v.qty} ${v.unite||''} · ${v.client||'Client inconnu'}</div></div><span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700">${fmt(v.total)}</span></div>`).join('');
 
   // Top produits
-  const topM={};S.ventes.filter(v=>v.employe===NOM).forEach(v=>{topM[v.nom]=(topM[v.nom]||0)+v.total;});
+  const topM={};S.ventes.filter(v=>!v.employe||v.employe.trim().toLowerCase()===NOM.trim().toLowerCase()).forEach(v=>{topM[v.nom]=(topM[v.nom]||0)+(v.total||0);});
   const top=Object.entries(topM).sort((a,b)=>b[1]-a[1]).slice(0,5);const mxT=top[0]?.[1]||1;
   document.getElementById('dash-top').innerHTML=top.length===0?'<div class="empty" style="padding:12px">Aucune donnée</div>':top.map(([n,v])=>`<div class="pw"><div class="ph"><span class="pl">${n}</span><span class="pv">${fmt(v)}</span></div><div class="pb"><div class="pf" style="width:${Math.round(v/mxT*100)}%;background:var(--accent)"></div></div></div>`).join('');
 }
@@ -1098,7 +1094,7 @@ function renderStock(filtre=''){
     </tr>`;
   }).join('');
 }
-function filtrerStock(v){renderStock(typeof v==='string'?v:document.getElementById('sw-stock')?.value||'');}
+function filtrerStock(v){renderStock(typeof v==='string'?v:'');}
 
 // ══ ALERTES ══
 function renderAlertes(){
@@ -1286,6 +1282,12 @@ document.addEventListener('click',function(e){
 // ══ UTILS ══
 function fmt(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n))+' F';}
 function fmtK(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M F';if(n>=1000)return Math.round(n/1000)+'k F';return Math.round(n)+' F';}
+// updateNotif — met à jour le badge d'alertes dans la nav
+function updateNotif(){
+  const nb=S.produits.filter(p=>p.stock<=p.seuil).length;
+  const badge=document.getElementById('notif-badge');
+  if(badge){badge.textContent=nb>0?nb:'';badge.style.display=nb>0?'flex':'none';}
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),4000);}
 
 
@@ -1319,10 +1321,10 @@ function ouvrirEditVente(id){
   document.getElementById('ev-id').value=id;
   document.getElementById('ev-nom').value=v.nom;
   document.getElementById('ev-qty').value=v.qty;
-  document.getElementById('ev-prix').value=v.pv;
+  document.getElementById('ev-prix').value=v.pv||0;
   document.getElementById('ev-client').value=v.client||'';
   document.getElementById('ev-total-preview').style.display='block';
-  document.getElementById('ev-total').textContent=fmt(v.pv*v.qty);
+  document.getElementById('ev-total').textContent=fmt((v.pv||0)*(v.qty||0));
   // Recalcul en temps réel via attributs HTML - pas de listeners accumulés
   const calcEv=()=>{
     const q=parseInt(document.getElementById('ev-qty').value)||0;
@@ -1342,10 +1344,18 @@ async function sauvegarderVente(){
   const v=S.ventes.find(x=>x.id===id);if(!v)return;
   setSyncStatus('loading','💾 Sauvegarde...');
   try{
+    // Ajuster le stock si la quantité a changé
+    const diffQty=qty-v.qty;
+    if(diffQty!==0){
+      const p=S.produits.find(x=>x.nom===v.nom);
+      if(p){const ns=Math.max(0,p.stock-diffQty);await sbPatch('produits',p.id,{stock:ns});p.stock=ns;}
+    }
     await sbPatch('ventes',id,{qty,pv,total:pv*qty,benef:(pv-v.pa)*qty,client});
+    v.qty=qty;v.pv=pv;v.total=pv*qty;v.benef=(pv-v.pa)*qty;v.client=client;
     fermerModal('modal-edit-vente');
-    toast('✅ Vente modifiée avec succès');
-    await charger();renderVentes();
+    setSyncStatus('ok');
+    toast('✅ Vente modifiée — stock ajusté');
+    renderVentes();renderDashboard();
   }catch(e){setSyncStatus('err');toast('❌ Erreur: '+e.message);}
 }
 
@@ -1530,7 +1540,7 @@ function renderRecus(filtre=''){
   chargerConfigImprimante();
   try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
   document.getElementById('badge-recus').textContent=RECUS.length;
-  const liste=filtre?RECUS.filter(r=>r.client.toLowerCase().includes(filtre.toLowerCase())):RECUS;
+  const liste=filtre?RECUS.filter(r=>(r.client||'').toLowerCase().includes(filtre.toLowerCase())):RECUS;
   document.getElementById('recus-list').innerHTML=liste.length===0?`<div class="empty"><span class="ei">🧾</span>Aucun reçu généré</div>`:liste.slice().reverse().map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
     <div>
       <div style="font-size:13px;font-weight:600;color:var(--text)">${r.client||'Client'} <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${r.num}</span></div>
@@ -1546,8 +1556,8 @@ function renderRecus(filtre=''){
   </div>`).join('');
 }
 function filtrerRecus(v){renderRecus(v);}
+let RC_LINE_COUNT=0;
 function ouvrirNouveauRecu(){
-  RECU_LINES=0;
   RECU_EN_EDITION=null;
   CLIENT_COUNT++;
   document.getElementById('rc-articles').innerHTML='';
@@ -1563,8 +1573,8 @@ function ouvrirNouveauRecu(){
   ouvrirModal('modal-recu');
 }
 function ajouterLigneRecu(prefill){
-  RECU_LINES++;
-  const id='rl'+RECU_LINES;
+  RC_LINE_COUNT++;
+  const id='rl'+RC_LINE_COUNT;
   const div=document.createElement('div');
   div.className='rc-ligne';div.id=id;
   div.innerHTML=`
@@ -1592,11 +1602,11 @@ function ajouterLigneRecu(prefill){
     // Focus auto sur la recherche
     setTimeout(()=>document.getElementById(id+'-search')?.focus(),50);
   }
-  // Fermer dropdown si clic ailleurs - once:true pour éviter accumulation
-  document.addEventListener('click', function handler(e){
+  // Fermer dropdown si clic ailleurs
+  document.addEventListener('click', function(e){
     const wrap=document.getElementById(id+'-wrap');
-    if(wrap&&!wrap.contains(e.target)){fermerDropdown(id);}
-  },{once:true,capture:false});
+    if(wrap&&!wrap.contains(e.target))fermerDropdown(id);
+  });
 }
 function supprimerLigneRecu(id){const el=document.getElementById(id);if(el)el.remove();calcRecu();}
 
@@ -1801,7 +1811,7 @@ function buildRecuHTML(recu){
     <div class="rp-total-row"><span>TOTAL</span><span>${fmt(recu.total)}</span></div>
     <div class="rp-row" style="margin-top:4px"><span>Paiement:</span><span>${recu.paiement}</span></div>
     <hr class="rp-sep">
-    <div class="rp-footer">${cfg.footer}</div>
+    <div class="rp-footer">${cfg.footer||'Merci de votre visite !'}</div>
   </div>`;
 }
 function afficherRecu(num){
@@ -1823,15 +1833,32 @@ function imprimerRecuId(num){
   window.print();
   toast('🖨️ Impression lancée — '+num);
 }
-function supprimerRecu(num){
+async function supprimerRecu(num){
   if(!confirm('Supprimer ce reçu ?'))return;
   try{RECUS=JSON.parse(localStorage.getItem('recus_gerant_'+NOM)||'[]');}catch(e){RECUS=[];}
+  const recu=RECUS.find(r=>r.num===num);
+  if(recu){
+    setSyncStatus('loading','🗑️ Suppression...');
+    // Remettre le stock
+    for(const a of (recu.articles||[])){
+      const p=S.produits.find(x=>x.nom===a.nom);
+      if(p){try{const ns=p.stock+a.qty;await sbPatch('produits',p.id,{stock:ns});p.stock=ns;}catch(e){}}
+    }
+    // Supprimer les ventes Supabase liées à ce reçu
+    try{
+      const vOld=await sbGet('ventes',`recu_num=eq.${encodeURIComponent(num)}&employe=eq.${encodeURIComponent(NOM)}`);
+      for(const v of (vOld||[])){try{await sbDelete('ventes',v.id);}catch(e){}}
+      S.ventes=S.ventes.filter(v=>v.recu_num!==num);
+    }catch(e){}
+    setSyncStatus('ok');
+  }
   RECUS=RECUS.filter(r=>r.num!==num);
   localStorage.setItem('recus_gerant_'+NOM,JSON.stringify(RECUS));
   const ap=document.getElementById('recu-apercu');
-  if(ap.innerHTML.includes(num))ap.innerHTML='<div style="color:#999;text-align:center;font-size:13px;padding:40px"><div style="font-size:36px;margin-bottom:10px;opacity:.3">🧾</div>Crée ou sélectionne un reçu</div>';
+  if(ap&&ap.innerHTML.includes(num))ap.innerHTML='<div style="color:#999;text-align:center;font-size:13px;padding:40px"><div style="font-size:36px;margin-bottom:10px;opacity:.3">🧾</div>Crée ou sélectionne un reçu</div>';
   renderRecus();
-  toast('🗑️ Reçu supprimé');
+  renderDashboard();
+  toast('🗑️ Reçu supprimé — stock remis à jour');
 }
 
 // ══ SYNC REÇU DEPUIS VENTES DU JOUR ══
@@ -1842,9 +1869,9 @@ function syncRecuDepuisVentes(){
   // Regrouper par article
   const grouped={};
   ventesJour.forEach(v=>{
-    if(!grouped[v.nom])grouped[v.nom]={nom:v.nom,qty:0,prix:v.pv,total:0};
-    grouped[v.nom].qty+=v.qty;
-    grouped[v.nom].total+=v.total;
+    if(!grouped[v.nom])grouped[v.nom]={nom:v.nom,qty:0,prix:v.pv||0,total:0};
+    grouped[v.nom].qty+=(v.qty||0);
+    grouped[v.nom].total+=(v.total||0);
     grouped[v.nom].prix=Math.round(grouped[v.nom].total/grouped[v.nom].qty);
   });
   // Vider les lignes existantes
@@ -2039,7 +2066,6 @@ function ouvrirEditFacture(num){
   ouvrirModal('modal-facture');
 }
 
-let FA_LINE_COUNT=0;
 function ajouterLigneFacture(prefill){
   FA_LINE_COUNT++;
   const id='fl'+FA_LINE_COUNT;
@@ -2392,10 +2418,10 @@ function renderTransport(){
   const today=new Date().toLocaleDateString('fr-FR');
   const mois=today.slice(3); // mm/aaaa
   const totalJour=list.filter(t=>t.date===today).reduce((s,t)=>s+t.montant,0);
-  const totalMois=list.filter(t=>t.date.slice(3)===mois).reduce((s,t)=>s+t.montant,0);
+  const totalMois=list.filter(t=>(t.date||'').slice(3)===mois).reduce((s,t)=>s+t.montant,0);
   // Bénéfice net = bénéfice ventes du jour - transport du jour
   const mesV=filtrerVentesParDate(today,NOM);
-  const benefBrut=mesV.reduce((s,v)=>s+v.benef,0);
+  const benefBrut=mesV.reduce((s,v)=>s+(v.benef||0),0);
   const benefNet=benefBrut-totalJour;
   document.getElementById('tp-jour').textContent=fmt(totalJour);
   document.getElementById('tp-mois').textContent=fmt(totalMois);
@@ -2440,7 +2466,6 @@ function renderHistorique(filtre=''){
   let h=getHistorique();
   if(filtre)h=h.filter(x=>x.action.toLowerCase().includes(filtre.toLowerCase())||x.detail.toLowerCase().includes(filtre.toLowerCase()));
   if(h.length===0){document.getElementById('historique-liste').innerHTML='<div class="empty"><span class="ei">🗓️</span>Aucune modification enregistrée</div>';return;}
-  const ICONS={'💳':'kc-b','💰':'kc-a','🗑️':'kc-r','✏️':'kc-o','📦':'kc-b','📥':'kc-a','🧾':'kc-a','❌':'kc-r'};
   document.getElementById('historique-liste').innerHTML=h.map(x=>`
     <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
       <div style="font-size:20px;flex-shrink:0;margin-top:2px">${x.action.split(' ')[0]}</div>
@@ -2456,13 +2481,12 @@ function filtrerHistorique(v){renderHistorique(v);}
 // ════════════════════════════════════════════
 // 📦 RÉCEPTION GROUPÉE
 // ════════════════════════════════════════════
-let RG_LINES=0;
 let RG_LINE_COUNT=0;
 function getRgHistorique(){try{return JSON.parse(localStorage.getItem('rg_historique_'+NOM)||'[]');}catch(e){return[];}}
 function saveRgHistorique(list){localStorage.setItem('rg_historique_'+NOM,JSON.stringify(list));}
 
 function ajouterLigneReceptionGroupe(){
-  RG_LINE_COUNT++;RG_LINES++;
+  RG_LINE_COUNT++;
   const id='rg'+RG_LINE_COUNT;
   const div=document.createElement('div');
   div.id=id;
@@ -2547,7 +2571,7 @@ async function validerReceptionGroupe(){
   // Reset
   document.getElementById('rg-articles').innerHTML='';
   document.getElementById('rg-note').value='';
-  RG_LINES=0;RG_LINE_COUNT=0;
+  RG_LINE_COUNT=0;
   renderReceptionGroupe();
   toast(`✅ ${ok} article(s) réceptionné(s) et stock mis à jour`);
 }
