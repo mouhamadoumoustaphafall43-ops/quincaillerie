@@ -1907,25 +1907,10 @@ function exporterVentesJourPDF(source){
       const [vy,vm,vd]=vDate.split('-');
       vDate=`${vd}/${vm}/${vy}`;
     }
-    return vDate===dateChoisie && v.employe===NOM;
+    const empOk=!v.employe||v.employe.trim().toLowerCase()===NOM.trim().toLowerCase();
+    return vDate===dateChoisie && empOk;
   });
-  if(ventesJour.length===0){
-    // Tenter sans filtre employe pour diagnostiquer
-    const toutesVentes=S.ventes.filter(v=>{
-      let vDate=v.date||'';
-      if(vDate.includes('-')&&vDate.length===10){
-        const [vy,vm,vd]=vDate.split('-');
-        vDate=`${vd}/${vm}/${vy}`;
-      }
-      return vDate===dateChoisie;
-    });
-    if(toutesVentes.length>0){
-      toast(`⚠️ ${toutesVentes.length} vente(s) trouvée(s) mais pas au nom de ${NOM}`);
-    } else {
-      toast(`⚠️ Aucune vente le ${dateChoisie}`);
-    }
-    return;
-  }
+  if(ventesJour.length===0){toast(`⚠️ Aucune vente le ${dateChoisie}`);return;}
   const ca=ventesJour.reduce((s,v)=>s+(v.total||0),0);
   const bn=ventesJour.reduce((s,v)=>s+(v.benef||0),0);
   const cfg=PRINTER_CONFIG;
@@ -2004,7 +1989,8 @@ function exporterVentesJourCSV(source){
       const [vy,vm,vd]=vDate.split('-');
       vDate=`${vd}/${vm}/${vy}`;
     }
-    return vDate===dateChoisie&&v.employe===NOM;
+    const empOk=!v.employe||v.employe.trim().toLowerCase()===NOM.trim().toLowerCase();
+    return vDate===dateChoisie&&empOk;
   });
   if(ventesJour.length===0){toast(`⚠️ Aucune vente le ${dateChoisie}`);return;}
   const dateFile=dateChoisie.replace(/\//g,'-');
