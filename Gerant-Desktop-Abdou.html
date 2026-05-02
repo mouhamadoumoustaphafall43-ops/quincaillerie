@@ -183,7 +183,7 @@ textarea{resize:vertical;min-height:70px;}
   <div class="login-box">
     <div class="login-logo">👷</div>
     <div class="login-title">Espace Gérant</div>
-    <div class="login-sub">QUINCAILLERIE KHADIJA · ABDOU FALL</div>
+    <div class="login-sub">QUINCAILLERIE KHADIJA · ABDOUL FALL</div>
     <span class="f-label">MOT DE PASSE</span>
     <input class="f-input" type="password" id="login-mdp" placeholder="••••••••" onkeydown="if(event.key==='Enter')seConnecter()">
     <button class="login-btn" onclick="seConnecter()">→ Accéder</button>
@@ -200,7 +200,7 @@ textarea{resize:vertical;min-height:70px;}
     <div class="logo-user">
       <div class="logo-av">A</div>
       <div>
-        <div class="logo-name">Abdou Fall</div>
+        <div class="logo-name">Abdoul Fall</div>
         <div class="logo-role">GÉRANT</div>
       </div>
     </div>
@@ -241,7 +241,7 @@ textarea{resize:vertical;min-height:70px;}
   <div class="page active" id="page-dashboard">
     <div class="page-header">
       <div>
-        <div class="page-title">Bonjour Abdou 👋</div>
+        <div class="page-title">Bonjour Abdoul 👋</div>
         <div class="page-sub" id="dash-date">—</div>
       </div>
       <div style="display:flex;gap:10px">
@@ -885,7 +885,7 @@ textarea{resize:vertical;min-height:70px;}
 const SUPA_URL = 'https://prazzxxhjatmxftfbiks.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InByYXp6eHhoamF0bXhmdGZiaWtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMjc3NTIsImV4cCI6MjA4OTcwMzc1Mn0.PV5qK7ZQopzTHDfNW8IexdjOno0z26BP0Gt3t7UUUdQ';
 const PASS     = 'Quinca123';
-const NOM      = 'Abdou Fall';
+const NOM      = 'Abdoul Fall';
 const SESSION  = 'qg_session';
 
 const H = {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
@@ -1051,7 +1051,11 @@ function renderVentes(filtre=''){
     const empOk=true;
     const filtreOk=!filtre||v.nom.toLowerCase().includes(filtre.toLowerCase())||(v.client||'').toLowerCase().includes(filtre.toLowerCase());
     return empOk&&filtreOk;
-  }).sort((a,b)=>new Date(b.ts||0)-new Date(a.ts||0));
+  }).sort((a,b)=>{
+    const da=new Date(b.ts||b.date||0);
+    const db=new Date(a.ts||a.date||0);
+    return da-db;
+  });
   document.getElementById('ventes-table').innerHTML=rows.length===0
     ?`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">Aucune vente enregistrée</td></tr>`
     :rows.map(v=>{
@@ -1789,6 +1793,7 @@ async function genererRecu(){
           benef:(a.prix-pa)*a.qty,
           date:date,
           ts:new Date().toISOString(),
+          heure:new Date().toLocaleTimeString('fr-FR'),
           client:client,
           employe:NOM,
           recu_num:num
