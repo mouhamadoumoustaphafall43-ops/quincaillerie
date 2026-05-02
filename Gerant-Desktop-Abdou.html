@@ -1793,10 +1793,8 @@ async function genererRecu(){
           benef:(a.prix-pa)*a.qty,
           date:date,
           ts:new Date().toISOString(),
-          heure:new Date().toLocaleTimeString('fr-FR'),
           client:client,
-          employe:NOM,
-          recu_num:num
+          employe:NOM
         };
         const res=await sbPost('ventes',venteData);
         const venteCreee=(Array.isArray(res)&&res[0])?res[0]:{...venteData,id:'loc-'+Date.now().toString(36)};
