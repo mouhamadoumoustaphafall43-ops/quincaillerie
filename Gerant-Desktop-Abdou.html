@@ -108,6 +108,7 @@ td strong{color:var(--text);font-weight:500;}
 .btn-ghost:hover{color:var(--text);border-color:var(--text3);}
 .btn-danger{background:rgba(232,64,42,.1);color:var(--red);border:1px solid rgba(232,64,42,.2);}
 .btn-sm{padding:5px 10px;font-size:11px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
 
 /* ══ SEARCH ══ */
 .sw{position:relative;margin-bottom:14px;}
@@ -703,8 +704,9 @@ textarea{resize:vertical;min-height:60px;}
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="fermerModal('modal-recu')">Annuler</button>
-      <button class="btn btn-blue" onclick="genererRecu(false)">🧾 Générer</button>
-      <button class="btn btn-primary" onclick="genererRecu(true)">🖨️ Générer & Imprimer</button>
+      <!-- FIX DOUBLONS: ids ajoutés sur les boutons pour pouvoir les désactiver -->
+      <button class="btn btn-blue" id="btn-generer" onclick="genererRecu(false)">🧾 Générer</button>
+      <button class="btn btn-primary" id="btn-generer-print" onclick="genererRecu(true)">🖨️ Générer & Imprimer</button>
     </div>
   </div>
 </div>
@@ -1413,6 +1415,9 @@ function ouvrirNouveauRecu(){
   document.getElementById('rc-sous-total').textContent='0 F';
   document.getElementById('rc-total').textContent='0 F';
   document.getElementById('modal-recu-title').textContent='🧾 Nouveau reçu';
+  // Réactiver les boutons au cas où
+  document.getElementById('btn-generer').disabled=false;
+  document.getElementById('btn-generer-print').disabled=false;
   ajouterLigneRecu();
   ouvrirModal('modal-recu');
 }
@@ -1430,6 +1435,9 @@ function ouvrirEditRecu(num){
   document.getElementById('rc-remise').value=recu.remise||0;
   document.getElementById('rc-paiement').value=recu.paiement||'Espèces';
   document.getElementById('modal-recu-title').textContent='✏️ Modifier — '+num;
+  // Réactiver les boutons au cas où
+  document.getElementById('btn-generer').disabled=false;
+  document.getElementById('btn-generer-print').disabled=false;
   recu.articles.forEach(a=>ajouterLigneRecu(a));
   calcRecu();
   ouvrirModal('modal-recu');
@@ -1536,19 +1544,27 @@ function calcRecu(){
   document.getElementById('rc-total').textContent=fmt(total);
 }
 
-// ══ GÉNÉRER REÇU — LOGIQUE PRINCIPALE ══
+// ══ GÉNÉRER REÇU — LOGIQUE PRINCIPALE (FIX DOUBLONS) ══
 async function genererRecu(imprimer){
-  const articles=collecterLignes();
-  if(articles.length===0){toast('⚠️ Ajoute au moins un article avec un prix');return;}
-  const client=document.getElementById('rc-client').value.trim()||'Client';
-  const date=document.getElementById('rc-date').value||new Date().toLocaleDateString('fr-FR');
-  const num=document.getElementById('rc-num').value;
-  const remise=parseInt(document.getElementById('rc-remise').value)||0;
-  const paiement=document.getElementById('rc-paiement').value;
-  const sous=articles.reduce((s,a)=>s+a.total,0);
-  const total=Math.round(sous*(1-remise/100));
-  setSyncStatus('loading','💾 Enregistrement...');
+  // ── GUARD ANTI-DOUBLON: désactiver les boutons immédiatement ──
+  const btnGen=document.getElementById('btn-generer');
+  const btnPrint=document.getElementById('btn-generer-print');
+  if(btnGen.disabled) return; // déjà en cours, bloquer
+  btnGen.disabled=true;
+  btnPrint.disabled=true;
+
   try{
+    const articles=collecterLignes();
+    if(articles.length===0){toast('⚠️ Ajoute au moins un article avec un prix');return;}
+    const client=document.getElementById('rc-client').value.trim()||'Client';
+    const date=document.getElementById('rc-date').value||new Date().toLocaleDateString('fr-FR');
+    const num=document.getElementById('rc-num').value;
+    const remise=parseInt(document.getElementById('rc-remise').value)||0;
+    const paiement=document.getElementById('rc-paiement').value;
+    const sous=articles.reduce((s,a)=>s+a.total,0);
+    const total=Math.round(sous*(1-remise/100));
+    setSyncStatus('loading','💾 Enregistrement...');
+
     // ── ÉTAPE 1: Si édition, récupérer ancien reçu AVANT écrasement ──
     chargerRecus();
     const ancienRecu=RECU_EDIT?RECUS.find(r=>r.num===num):null;
@@ -1586,6 +1602,8 @@ async function genererRecu(imprimer){
           p.stock=newStock;
         }
         // Créer la vente sur Supabase
+        // FIX DOUBLONS: on NE fait plus S.ventes.unshift() ici
+        // car charger() ci-dessous rechargera tout depuis Supabase
         const venteData={
           produit_id:p?p.id:null,
           nom:a.nom,
@@ -1600,9 +1618,7 @@ async function genererRecu(imprimer){
           client:client,
           employe:NOM
         };
-        const res=await sbPost('ventes',venteData);
-        const venteCreee=(Array.isArray(res)&&res[0])?res[0]:{...venteData,id:'loc-'+Date.now().toString(36)+Math.random()};
-        S.ventes.unshift(venteCreee);
+        await sbPost('ventes',venteData);
         syncOk++;
       }catch(e){
         erreurs.push(a.nom);
@@ -1610,7 +1626,7 @@ async function genererRecu(imprimer){
       }
     }
 
-    // ── ÉTAPE 5: Recharger depuis Supabase ──
+    // ── ÉTAPE 5: Recharger depuis Supabase (source de vérité unique) ──
     await charger();
 
     // ── ÉTAPE 6: Feedback ──
@@ -1630,6 +1646,10 @@ async function genererRecu(imprimer){
     setSyncStatus('err');
     toast('❌ Erreur: '+e.message);
     console.error('genererRecu:',e);
+  } finally {
+    // ── TOUJOURS réactiver les boutons à la fin ──
+    btnGen.disabled=false;
+    btnPrint.disabled=false;
   }
 }
 
