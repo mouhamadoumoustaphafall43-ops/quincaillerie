@@ -758,7 +758,7 @@ let CFG = {boutique:'Quincaillerie Khadija', adresse:'Keur Thiem Cité Dabakh', 
 
 // ══ UTILS ══
 function fmt(n){ return new Intl.NumberFormat('fr-FR').format(Math.round(n||0))+' F'; }
-function fmtK(n){ if(n>=1000000) return (n/1000000).toFixed(1)+'M F'; if(n>=1000) return Math.round(n/1000)+'k F'; return Math.round(n||0)+' F'; }
+function fmtK(n){ return fmt(n); }
 function normDate(d){
   if(!d) return '';
   d = String(d);
